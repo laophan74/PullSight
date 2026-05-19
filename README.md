@@ -4,7 +4,7 @@ PullSight is an AI-assisted GitHub pull request review dashboard built as a full
 
 ## Frontend Scope
 
-- GitHub OAuth entry state
+- GitHub OAuth entry state and logged-in user display
 - Repository and pull request selectors
 - PR risk score, changed-file metrics, quota, and cache key summary
 - Review findings grouped by severity
@@ -21,9 +21,18 @@ src/
     ui/          Small reusable presentational components
   constants/     Shared labels and display order
   data/          Temporary mock data until the ASP.NET API is connected
+  services/      API URL construction and auth API calls
   utils/         Pure helpers for filtering and deriving review state
   types.ts       Domain models shared across the frontend
 ```
+
+## Completed Integration
+
+- The top bar checks the current GitHub session with `GET /api/auth/me`.
+- Login redirects to `GET /api/auth/github/login` on the ASP.NET backend.
+- Logout calls `POST /api/auth/logout`.
+- Auth requests use `credentials: 'include'` so the backend auth cookie is sent.
+- All backend URLs are derived from `VITE_API_BASE_URL` in `src/services/api.ts`.
 
 ## Planned Backend
 
@@ -60,3 +69,5 @@ For Vercel, set:
 ```text
 VITE_API_BASE_URL=https://pullsight-backend.onrender.com
 ```
+
+Changing the backend domain in production should only require changing `VITE_API_BASE_URL` in Vercel and redeploying the frontend.

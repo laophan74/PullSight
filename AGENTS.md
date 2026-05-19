@@ -12,11 +12,19 @@ Production backend URL:
 https://pullsight-backend.onrender.com
 ```
 
-When replacing mock data with API calls, read the backend base URL from:
+When adding or changing API calls, read the backend base URL from:
 
 ```text
 VITE_API_BASE_URL
 ```
+
+All backend URLs should be derived in `src/services/api.ts`. Production Vercel value:
+
+```text
+VITE_API_BASE_URL=https://pullsight-backend.onrender.com
+```
+
+GitHub login is already wired through backend auth endpoints and uses cookie credentials.
 
 ## Standards
 
@@ -25,6 +33,7 @@ VITE_API_BASE_URL
 - Put review feature components under `src/components/review`.
 - Put layout components under `src/components/layout`.
 - Put reusable primitives under `src/components/ui`.
+- Put API services under `src/services`; avoid scattered hard-coded backend URLs.
 - Put temporary mock data under `src/data`; replace it with API services as backend endpoints mature.
 - Keep CSS responsive and avoid text overflow on mobile and desktop.
 
