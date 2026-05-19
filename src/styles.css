@@ -203,6 +203,7 @@ h3 {
 
 .icon-button,
 .primary-button,
+.secondary-button,
 .review-button {
   display: inline-flex;
   align-items: center;
@@ -220,11 +221,27 @@ h3 {
 }
 
 .primary-button,
+.secondary-button,
 .review-button {
   gap: 9px;
   padding: 0 16px;
+}
+
+.primary-button,
+.review-button {
   color: #ffffff;
   background: var(--ink);
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.secondary-button {
+  color: var(--ink);
+  background: var(--panel);
+  border-color: var(--line);
 }
 
 .control-strip {
@@ -269,6 +286,26 @@ h3 {
 .review-button {
   align-self: end;
   background: var(--green);
+}
+
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--panel);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.user-chip img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
 }
 
 .metrics-grid {
@@ -558,8 +595,15 @@ code {
 
   .topbar-actions,
   .primary-button,
+  .secondary-button,
+  .user-chip,
   .review-button {
     width: 100%;
+  }
+
+  .user-chip,
+  .secondary-button {
+    justify-content: center;
   }
 
   .icon-button {

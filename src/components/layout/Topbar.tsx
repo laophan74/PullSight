@@ -1,6 +1,14 @@
-import { GitPullRequestArrow, RefreshCw } from 'lucide-react';
+import { GitPullRequestArrow, LogOut, RefreshCw } from 'lucide-react';
+import type { AuthUser } from '../../services/auth';
 
-export function Topbar() {
+type TopbarProps = {
+  authUser: AuthUser | null;
+  isAuthLoading: boolean;
+  onLogin: () => void;
+  onLogout: () => void;
+};
+
+export function Topbar({ authUser, isAuthLoading, onLogin, onLogout }: TopbarProps) {
   return (
     <header className="topbar">
       <div>
@@ -11,10 +19,23 @@ export function Topbar() {
         <button className="icon-button" type="button" aria-label="Refresh repositories">
           <RefreshCw size={18} />
         </button>
-        <button className="primary-button" type="button">
-          <GitPullRequestArrow size={18} />
-          Login with GitHub
-        </button>
+        {authUser ? (
+          <>
+            <a className="user-chip" href={authUser.profileUrl} target="_blank" rel="noreferrer">
+              <img src={authUser.avatarUrl} alt="" />
+              <span>{authUser.login}</span>
+            </a>
+            <button className="secondary-button" type="button" onClick={onLogout}>
+              <LogOut size={18} />
+              Logout
+            </button>
+          </>
+        ) : (
+          <button className="primary-button" type="button" onClick={onLogin} disabled={isAuthLoading}>
+            <GitPullRequestArrow size={18} />
+            {isAuthLoading ? 'Checking GitHub' : 'Login with GitHub'}
+          </button>
+        )}
       </div>
     </header>
   );

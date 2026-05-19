@@ -41,10 +41,22 @@ npm install
 npm run dev
 ```
 
+Create a local `.env` file when the backend is not running on the default URL:
+
+```text
+VITE_API_BASE_URL=http://localhost:5200
+```
+
+Use `.env.example` as the template. All frontend backend URLs are derived from `VITE_API_BASE_URL` through `src/services/api.ts`, so changing the backend domain should only require updating that environment variable.
+
 ## Production Build
 
 ```bash
 npm run build
 ```
 
-The frontend is ready for Vercel deployment. Backend API integration will be added after the ASP.NET Core service is scaffolded.
+For Vercel, set:
+
+```text
+VITE_API_BASE_URL=https://pullsight-backend.onrender.com
+```

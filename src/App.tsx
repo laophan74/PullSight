@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Topbar } from './components/layout/Topbar';
 import { ReviewControls } from './components/review/ReviewControls';
@@ -6,10 +6,14 @@ import { ReviewMetrics } from './components/review/ReviewMetrics';
 import { ReviewPanel } from './components/review/ReviewPanel';
 import { ReviewSidebar } from './components/review/ReviewSidebar';
 import { pullRequestsByRepo, repositories, reviewRun } from './data/mockReviewData';
+import { getGitHubLoginUrl } from './services/api';
+import { getCurrentUser, logout, type AuthUser } from './services/auth';
 import type { Severity } from './types';
 import { getFilteredFindings } from './utils/review';
 
 export function App() {
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [selectedRepoId, setSelectedRepoId] = useState(repositories[0].id);
   const selectedRepo = repositories.find((repo) => repo.id === selectedRepoId) ?? repositories[0];
   const pullRequests = pullRequestsByRepo[selectedRepo.id] ?? [];
@@ -22,6 +26,31 @@ export function App() {
     [activeSeverity],
   );
 
+  useEffect(() => {
+    let isMounted = true;
+
+    getCurrentUser()
+      .then((user) => {
+        if (isMounted) {
+          setAuthUser(user);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setAuthUser(null);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsAuthLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   function handleRepoChange(repoId: number) {
     const nextPullRequests = pullRequestsByRepo[repoId] ?? [];
 
@@ -29,12 +58,26 @@ export function App() {
     setSelectedPrId(nextPullRequests[0]?.id);
   }
 
+  function handleLogin() {
+    window.location.assign(getGitHubLoginUrl());
+  }
+
+  async function handleLogout() {
+    await logout();
+    setAuthUser(null);
+  }
+
   return (
     <div className="app-shell">
       <Sidebar />
 
       <main className="workspace" id="dashboard">
-        <Topbar />
+        <Topbar
+          authUser={authUser}
+          isAuthLoading={isAuthLoading}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+        />
 
         <ReviewControls
           repositories={repositories}
