@@ -6,6 +6,18 @@ Frontend-specific Codex context for PullSight.
 
 This repository contains the React + Vite frontend for PullSight. It should remain deployable to Vercel as a standalone frontend repo.
 
+Production backend URL:
+
+```text
+https://pullsight-backend.onrender.com
+```
+
+When replacing mock data with API calls, read the backend base URL from:
+
+```text
+VITE_API_BASE_URL
+```
+
 ## Standards
 
 - Use React + TypeScript.
