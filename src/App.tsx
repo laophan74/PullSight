@@ -1,0 +1,63 @@
+import { useMemo, useState } from 'react';
+import { Sidebar } from './components/layout/Sidebar';
+import { Topbar } from './components/layout/Topbar';
+import { ReviewControls } from './components/review/ReviewControls';
+import { ReviewMetrics } from './components/review/ReviewMetrics';
+import { ReviewPanel } from './components/review/ReviewPanel';
+import { ReviewSidebar } from './components/review/ReviewSidebar';
+import { pullRequestsByRepo, repositories, reviewRun } from './data/mockReviewData';
+import type { Severity } from './types';
+import { getFilteredFindings } from './utils/review';
+
+export function App() {
+  const [selectedRepoId, setSelectedRepoId] = useState(repositories[0].id);
+  const selectedRepo = repositories.find((repo) => repo.id === selectedRepoId) ?? repositories[0];
+  const pullRequests = pullRequestsByRepo[selectedRepo.id] ?? [];
+  const [selectedPrId, setSelectedPrId] = useState(pullRequests[0]?.id);
+  const selectedPr = pullRequests.find((pr) => pr.id === selectedPrId) ?? pullRequests[0];
+  const [activeSeverity, setActiveSeverity] = useState<Severity | 'all'>('all');
+
+  const filteredFindings = useMemo(
+    () => getFilteredFindings(reviewRun.findings, activeSeverity),
+    [activeSeverity],
+  );
+
+  function handleRepoChange(repoId: number) {
+    const nextPullRequests = pullRequestsByRepo[repoId] ?? [];
+
+    setSelectedRepoId(repoId);
+    setSelectedPrId(nextPullRequests[0]?.id);
+  }
+
+  return (
+    <div className="app-shell">
+      <Sidebar />
+
+      <main className="workspace" id="dashboard">
+        <Topbar />
+
+        <ReviewControls
+          repositories={repositories}
+          selectedRepo={selectedRepo}
+          pullRequests={pullRequests}
+          selectedPr={selectedPr}
+          onRepoSelect={handleRepoChange}
+          onPrSelect={setSelectedPrId}
+        />
+
+        <ReviewMetrics pullRequest={selectedPr} reviewRun={reviewRun} />
+
+        <section className="review-layout">
+          <ReviewPanel
+            activeSeverity={activeSeverity}
+            filteredFindings={filteredFindings}
+            pullRequest={selectedPr}
+            reviewRun={reviewRun}
+            onSeverityChange={setActiveSeverity}
+          />
+          <ReviewSidebar />
+        </section>
+      </main>
+    </div>
+  );
+}

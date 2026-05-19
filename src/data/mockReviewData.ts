@@ -1,0 +1,148 @@
+import type { PullRequest, Repository, ReviewRun } from '../types';
+
+export const repositories: Repository[] = [
+  {
+    id: 101,
+    name: 'commerce-api',
+    owner: 'duydev',
+    language: 'C#',
+    visibility: 'private',
+    openPullRequests: 4,
+    lastSyncedAt: '2 minutes ago',
+  },
+  {
+    id: 102,
+    name: 'social-media-react',
+    owner: 'duydev',
+    language: 'TypeScript',
+    visibility: 'public',
+    openPullRequests: 2,
+    lastSyncedAt: '18 minutes ago',
+  },
+  {
+    id: 103,
+    name: 'portfolio',
+    owner: 'duydev',
+    language: 'React',
+    visibility: 'public',
+    openPullRequests: 1,
+    lastSyncedAt: '1 hour ago',
+  },
+];
+
+export const pullRequestsByRepo: Record<number, PullRequest[]> = {
+  101: [
+    {
+      id: 9001,
+      number: 42,
+      title: 'Add checkout discount workflow',
+      author: 'duydev',
+      branch: 'feature/discount-engine',
+      targetBranch: 'main',
+      headSha: 'a18f92d',
+      changedFiles: 16,
+      additions: 482,
+      deletions: 93,
+      updatedAt: '8 minutes ago',
+    },
+    {
+      id: 9002,
+      number: 41,
+      title: 'Refactor payment provider client',
+      author: 'duydev',
+      branch: 'refactor/payment-client',
+      targetBranch: 'main',
+      headSha: '7ca31bf',
+      changedFiles: 9,
+      additions: 221,
+      deletions: 188,
+      updatedAt: '35 minutes ago',
+    },
+  ],
+  102: [
+    {
+      id: 8101,
+      number: 27,
+      title: 'Improve notification settings panel',
+      author: 'duydev',
+      branch: 'ui/notification-settings',
+      targetBranch: 'develop',
+      headSha: 'b42cd10',
+      changedFiles: 7,
+      additions: 173,
+      deletions: 41,
+      updatedAt: '14 minutes ago',
+    },
+  ],
+  103: [
+    {
+      id: 7101,
+      number: 9,
+      title: 'Add case study page',
+      author: 'duydev',
+      branch: 'content/case-study',
+      targetBranch: 'main',
+      headSha: 'e7a0c44',
+      changedFiles: 5,
+      additions: 148,
+      deletions: 12,
+      updatedAt: '2 hours ago',
+    },
+  ],
+};
+
+export const reviewRun: ReviewRun = {
+  id: 'run_01HX',
+  repoName: 'commerce-api',
+  prNumber: 42,
+  headSha: 'a18f92d',
+  status: 'completed',
+  analyzer: 'Gemini 1.5 Flash + rule fallback',
+  riskScore: 78,
+  createdAt: 'Today, 2:14 AM',
+  quotaRemaining: 3,
+  summary:
+    'The PR changes checkout pricing, promotion validation, and order totals. Main risk is inconsistent authorization around discount overrides plus missing tests around conflicting coupon rules.',
+  findings: [
+    {
+      id: 'f1',
+      severity: 'high',
+      filePath: 'src/Controllers/DiscountsController.cs',
+      line: 74,
+      title: 'Admin discount override endpoint is missing authorization',
+      detail:
+        'The new endpoint mutates discount rules but does not require an Admin policy. A signed-in customer could potentially hit this route if routing is exposed.',
+      source: 'rule',
+    },
+    {
+      id: 'f2',
+      severity: 'medium',
+      filePath: 'src/Services/CheckoutPricingService.cs',
+      line: 128,
+      title: 'Coupon stacking path has no regression coverage',
+      detail:
+        'Business logic now allows campaign and referral discounts to combine, but no tests were added for max-discount or expired-coupon combinations.',
+      source: 'ai',
+    },
+    {
+      id: 'f3',
+      severity: 'medium',
+      filePath: 'src/Data/PromotionRepository.cs',
+      line: 53,
+      title: 'Raw SQL filter builds a dynamic sort clause',
+      detail:
+        'The query parameter is validated for empty values, but not against an allow-list of sortable columns before being interpolated.',
+      source: 'rule',
+    },
+    {
+      id: 'f4',
+      severity: 'low',
+      filePath: 'src/Services/GitHubDiffNormalizer.cs',
+      line: 31,
+      title: 'Large generated files should be skipped before AI analysis',
+      detail:
+        'Lock files and generated snapshots can consume free AI quota. Add a filter before composing the model request.',
+      source: 'ai',
+    },
+  ],
+};
