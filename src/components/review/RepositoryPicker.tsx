@@ -29,7 +29,9 @@ export function RepositoryPicker({
           disabled={isDisabled}
         >
           {isLoading ? <option value="">Loading GitHub repositories...</option> : null}
-          {!isLoading && repositories.length === 0 ? <option value="">No repositories found</option> : null}
+          {!isLoading && repositories.length === 0 ? (
+            <option value="">No repositories found</option>
+          ) : null}
           {repositories.map((repo) => (
             <option key={repo.id} value={repo.id}>
               {repo.fullName} ({repo.visibility})
@@ -41,7 +43,7 @@ export function RepositoryPicker({
       {error ? <small className="field-message error">{error}</small> : null}
       {!error && selectedRepo ? (
         <small className="field-message">
-          {selectedRepo.language} · default branch {selectedRepo.defaultBranch ?? 'unknown'}
+          {selectedRepo.language} - default branch {selectedRepo.defaultBranch ?? 'unknown'}
         </small>
       ) : null}
     </label>

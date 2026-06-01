@@ -23,11 +23,11 @@ export function ReviewPanel({
       <article className="review-main empty-state">
         <div>
           <p className="eyebrow">Current review</p>
-          <h2>Select a repository to continue</h2>
+          <h2>Select an open pull request to continue</h2>
         </div>
         <p className="review-summary">
-          Repository Browser is now connected to GitHub. Pull request listing is the next step in
-          the review flow.
+          PullSight now loads open pull requests from GitHub for the selected repository. Choose a
+          PR above to review its details.
         </p>
       </article>
     );

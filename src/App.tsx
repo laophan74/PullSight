@@ -8,8 +8,9 @@ import { ReviewSidebar } from './components/review/ReviewSidebar';
 import { pullRequestsByRepo, repositories, reviewRun } from './data/mockReviewData';
 import { getGitHubLoginUrl } from './services/api';
 import { getCurrentUser, logout, type AuthUser } from './services/auth';
+import { getPullRequests } from './services/pullRequests';
 import { getRepositories } from './services/repositories';
-import type { Repository, Severity } from './types';
+import type { PullRequest, Repository, Severity } from './types';
 import { getFilteredFindings } from './utils/review';
 
 export function App() {
@@ -19,12 +20,19 @@ export function App() {
   const [availableRepositories, setAvailableRepositories] = useState<Repository[]>(repositories);
   const [isRepositoryLoading, setIsRepositoryLoading] = useState(false);
   const [repositoryError, setRepositoryError] = useState<string | null>(null);
+  const [availablePullRequests, setAvailablePullRequests] = useState<PullRequest[]>(
+    pullRequestsByRepo[repositories[0].id] ?? [],
+  );
+  const [isPullRequestLoading, setIsPullRequestLoading] = useState(false);
+  const [pullRequestError, setPullRequestError] = useState<string | null>(null);
   const [selectedRepoId, setSelectedRepoId] = useState<number | undefined>(repositories[0].id);
   const selectedRepo =
     availableRepositories.find((repo) => repo.id === selectedRepoId) ?? availableRepositories[0];
-  const pullRequests = selectedRepo ? (pullRequestsByRepo[selectedRepo.id] ?? []) : [];
-  const [selectedPrId, setSelectedPrId] = useState<number | undefined>(pullRequests[0]?.id);
-  const selectedPr = pullRequests.find((pr) => pr.id === selectedPrId) ?? pullRequests[0];
+  const [selectedPrId, setSelectedPrId] = useState<number | undefined>(
+    availablePullRequests[0]?.id,
+  );
+  const selectedPr =
+    availablePullRequests.find((pr) => pr.id === selectedPrId) ?? availablePullRequests[0];
   const [activeSeverity, setActiveSeverity] = useState<Severity | 'all'>('all');
 
   const filteredFindings = useMemo(
@@ -64,12 +72,35 @@ export function App() {
       setAvailableRepositories(repositories);
       setRepositoryError(null);
       setSelectedRepoId(firstDemoRepo?.id);
-      setSelectedPrId(firstDemoRepo ? pullRequestsByRepo[firstDemoRepo.id]?.[0]?.id : undefined);
       return;
     }
 
+    setAvailableRepositories([]);
+    setSelectedRepoId(undefined);
+    setAvailablePullRequests([]);
+    setSelectedPrId(undefined);
     void loadRepositories();
   }, [authUser]);
+
+  useEffect(() => {
+    if (!selectedRepo) {
+      setAvailablePullRequests([]);
+      setSelectedPrId(undefined);
+      setPullRequestError(null);
+      return;
+    }
+
+    if (!authUser) {
+      const demoPullRequests = pullRequestsByRepo[selectedRepo.id] ?? [];
+
+      setAvailablePullRequests(demoPullRequests);
+      setSelectedPrId(demoPullRequests[0]?.id);
+      setPullRequestError(null);
+      return;
+    }
+
+    void loadPullRequests(selectedRepo);
+  }, [authUser, selectedRepo?.id]);
 
   async function loadRepositories() {
     setIsRepositoryLoading(true);
@@ -86,7 +117,6 @@ export function App() {
 
         return userRepositories[0]?.id;
       });
-      setSelectedPrId(undefined);
     } catch (error) {
       setRepositoryError(error instanceof Error ? error.message : 'Unable to load repositories.');
     } finally {
@@ -94,11 +124,26 @@ export function App() {
     }
   }
 
-  function handleRepoChange(repoId: number) {
-    const nextPullRequests = pullRequestsByRepo[repoId] ?? [];
+  async function loadPullRequests(repository: Repository) {
+    setIsPullRequestLoading(true);
+    setPullRequestError(null);
+    setAvailablePullRequests([]);
+    setSelectedPrId(undefined);
 
+    try {
+      const pullRequests = await getPullRequests(repository.owner, repository.name);
+
+      setAvailablePullRequests(pullRequests);
+      setSelectedPrId(pullRequests[0]?.id);
+    } catch (error) {
+      setPullRequestError(error instanceof Error ? error.message : 'Unable to load pull requests.');
+    } finally {
+      setIsPullRequestLoading(false);
+    }
+  }
+
+  function handleRepoChange(repoId: number) {
     setSelectedRepoId(repoId);
-    setSelectedPrId(nextPullRequests[0]?.id);
   }
 
   function handleLogin() {
@@ -130,8 +175,10 @@ export function App() {
           selectedRepo={selectedRepo}
           isRepositoryLoading={isRepositoryLoading}
           repositoryError={repositoryError}
-          pullRequests={pullRequests}
+          pullRequests={availablePullRequests}
           selectedPr={selectedPr}
+          isPullRequestLoading={isPullRequestLoading}
+          pullRequestError={pullRequestError}
           onRepoSelect={handleRepoChange}
           onPrSelect={setSelectedPrId}
         />

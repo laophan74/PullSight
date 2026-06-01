@@ -10,6 +10,8 @@ type ReviewControlsProps = {
   repositoryError?: string | null;
   pullRequests: PullRequest[];
   selectedPr?: PullRequest;
+  isPullRequestLoading?: boolean;
+  pullRequestError?: string | null;
   onRepoSelect: (repoId: number) => void;
   onPrSelect: (prId: number) => void;
 };
@@ -21,6 +23,8 @@ export function ReviewControls({
   repositoryError,
   pullRequests,
   selectedPr,
+  isPullRequestLoading,
+  pullRequestError,
   onRepoSelect,
   onPrSelect,
 }: ReviewControlsProps) {
@@ -36,9 +40,11 @@ export function ReviewControls({
       <PullRequestPicker
         pullRequests={pullRequests}
         selectedPr={selectedPr}
+        isLoading={isPullRequestLoading}
+        error={pullRequestError}
         onSelect={onPrSelect}
       />
-      <button className="review-button" type="button">
+      <button className="review-button" type="button" disabled={!selectedPr}>
         <Play size={18} />
         Analyze PR
       </button>

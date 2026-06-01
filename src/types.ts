@@ -26,6 +26,7 @@ export type PullRequest = {
   additions: number;
   deletions: number;
   updatedAt: string;
+  htmlUrl?: string;
 };
 
 export type ReviewFinding = {
