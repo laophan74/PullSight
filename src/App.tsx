@@ -14,6 +14,7 @@ import { getFilteredFindings } from './utils/review';
 export function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isLoginRedirecting, setIsLoginRedirecting] = useState(false);
   const [selectedRepoId, setSelectedRepoId] = useState(repositories[0].id);
   const selectedRepo = repositories.find((repo) => repo.id === selectedRepoId) ?? repositories[0];
   const pullRequests = pullRequestsByRepo[selectedRepo.id] ?? [];
@@ -59,6 +60,7 @@ export function App() {
   }
 
   function handleLogin() {
+    setIsLoginRedirecting(true);
     window.location.assign(getGitHubLoginUrl());
   }
 
@@ -69,12 +71,12 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar authUser={authUser} />
 
       <main className="workspace" id="dashboard">
         <Topbar
           authUser={authUser}
-          isAuthLoading={isAuthLoading}
+          isAuthLoading={isAuthLoading || isLoginRedirecting}
           onLogin={handleLogin}
           onLogout={handleLogout}
         />

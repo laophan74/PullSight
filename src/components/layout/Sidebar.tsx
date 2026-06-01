@@ -6,8 +6,13 @@ import {
   GitPullRequestArrow,
   ShieldCheck,
 } from 'lucide-react';
+import type { AuthUser } from '../../services/auth';
 
-export function Sidebar() {
+type SidebarProps = {
+  authUser: AuthUser | null;
+};
+
+export function Sidebar({ authUser }: SidebarProps) {
   return (
     <aside className="sidebar" aria-label="PullSight navigation">
       <div className="brand">
@@ -42,12 +47,16 @@ export function Sidebar() {
       <div className="connection-panel">
         <span className="eyebrow">GitHub OAuth</span>
         <div className="user-row">
-          <div className="avatar">D</div>
+          {authUser?.avatarUrl ? (
+            <img className="avatar image-avatar" src={authUser.avatarUrl} alt="" />
+          ) : (
+            <div className="avatar">{authUser?.login?.[0]?.toUpperCase() ?? 'G'}</div>
+          )}
           <div>
-            <strong>duydev</strong>
-            <span>Connected</span>
+            <strong>{authUser?.login ?? 'Not connected'}</strong>
+            <span>{authUser ? 'Connected' : 'Login required'}</span>
           </div>
-          <CheckCircle2 aria-label="Connected" size={18} />
+          {authUser ? <CheckCircle2 aria-label="Connected" size={18} /> : null}
         </div>
       </div>
     </aside>

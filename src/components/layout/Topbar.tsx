@@ -1,4 +1,4 @@
-import { GitPullRequestArrow, LogOut, RefreshCw } from 'lucide-react';
+import { GitPullRequestArrow, Loader2, LogOut, RefreshCw } from 'lucide-react';
 import type { AuthUser } from '../../services/auth';
 
 type TopbarProps = {
@@ -20,20 +20,18 @@ export function Topbar({ authUser, isAuthLoading, onLogin, onLogout }: TopbarPro
           <RefreshCw size={18} />
         </button>
         {authUser ? (
-          <>
-            <a className="user-chip" href={authUser.profileUrl} target="_blank" rel="noreferrer">
-              <img src={authUser.avatarUrl} alt="" />
-              <span>{authUser.login}</span>
-            </a>
-            <button className="secondary-button" type="button" onClick={onLogout}>
-              <LogOut size={18} />
-              Logout
-            </button>
-          </>
+          <button className="secondary-button" type="button" onClick={onLogout}>
+            <LogOut size={18} />
+            Logout
+          </button>
         ) : (
           <button className="primary-button" type="button" onClick={onLogin} disabled={isAuthLoading}>
-            <GitPullRequestArrow size={18} />
-            {isAuthLoading ? 'Checking GitHub' : 'Login with GitHub'}
+            {isAuthLoading ? (
+              <Loader2 className="spin-icon" size={18} />
+            ) : (
+              <GitPullRequestArrow size={18} />
+            )}
+            {isAuthLoading ? 'Connecting GitHub' : 'Login with GitHub'}
           </button>
         )}
       </div>
