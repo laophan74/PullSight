@@ -6,7 +6,7 @@ import { SeverityTabs } from './SeverityTabs';
 type ReviewPanelProps = {
   activeSeverity: Severity | 'all';
   filteredFindings: ReviewFinding[];
-  pullRequest: PullRequest;
+  pullRequest?: PullRequest;
   reviewRun: ReviewRun;
   onSeverityChange: (severity: Severity | 'all') => void;
 };
@@ -18,6 +18,21 @@ export function ReviewPanel({
   reviewRun,
   onSeverityChange,
 }: ReviewPanelProps) {
+  if (!pullRequest) {
+    return (
+      <article className="review-main empty-state">
+        <div>
+          <p className="eyebrow">Current review</p>
+          <h2>Select a repository to continue</h2>
+        </div>
+        <p className="review-summary">
+          Repository Browser is now connected to GitHub. Pull request listing is the next step in
+          the review flow.
+        </p>
+      </article>
+    );
+  }
+
   return (
     <article className="review-main">
       <div className="section-heading">

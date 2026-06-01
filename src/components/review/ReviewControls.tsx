@@ -5,9 +5,11 @@ import { RepositoryPicker } from './RepositoryPicker';
 
 type ReviewControlsProps = {
   repositories: Repository[];
-  selectedRepo: Repository;
+  selectedRepo?: Repository;
+  isRepositoryLoading?: boolean;
+  repositoryError?: string | null;
   pullRequests: PullRequest[];
-  selectedPr: PullRequest;
+  selectedPr?: PullRequest;
   onRepoSelect: (repoId: number) => void;
   onPrSelect: (prId: number) => void;
 };
@@ -15,6 +17,8 @@ type ReviewControlsProps = {
 export function ReviewControls({
   repositories,
   selectedRepo,
+  isRepositoryLoading,
+  repositoryError,
   pullRequests,
   selectedPr,
   onRepoSelect,
@@ -25,6 +29,8 @@ export function ReviewControls({
       <RepositoryPicker
         repositories={repositories}
         selectedRepo={selectedRepo}
+        isLoading={isRepositoryLoading}
+        error={repositoryError}
         onSelect={onRepoSelect}
       />
       <PullRequestPicker

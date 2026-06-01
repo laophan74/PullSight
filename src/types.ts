@@ -4,10 +4,14 @@ export type Repository = {
   id: number;
   name: string;
   owner: string;
+  fullName: string;
+  description?: string | null;
   language: string;
   visibility: 'public' | 'private';
   openPullRequests: number;
   lastSyncedAt: string;
+  defaultBranch?: string;
+  htmlUrl?: string;
 };
 
 export type PullRequest = {
