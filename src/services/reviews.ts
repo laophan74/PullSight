@@ -15,6 +15,7 @@ type ReviewRunResponse = {
   analyzer: string;
   riskScore: number;
   quotaRemaining: number;
+  createdAt: string;
   summary: string;
   findings: ReviewFindingResponse[];
 };
@@ -67,7 +68,7 @@ export async function analyzePullRequest(
       status: payload.reviewRun.status,
       analyzer: payload.reviewRun.analyzer,
       riskScore: payload.reviewRun.riskScore,
-      createdAt: 'Just now',
+      createdAt: new Date(payload.reviewRun.createdAt).toLocaleString(),
       quotaRemaining: payload.reviewRun.quotaRemaining,
       summary: payload.reviewRun.summary,
       findings: payload.reviewRun.findings.map((finding) => ({

@@ -43,6 +43,8 @@ export type PullRequestDiffFile = {
 };
 
 export type PullRequestDiff = {
+  repositoryId: number;
+  repositoryFullName: string;
   id: number;
   number: number;
   title: string;
