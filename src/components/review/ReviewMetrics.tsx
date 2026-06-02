@@ -4,7 +4,7 @@ import { Metric } from '../ui/Metric';
 type ReviewMetricsProps = {
   pullRequest?: PullRequest;
   pullRequestDiff?: PullRequestDiff | null;
-  reviewRun: ReviewRun;
+  reviewRun?: ReviewRun | null;
 };
 
 export function ReviewMetrics({ pullRequest, pullRequestDiff, reviewRun }: ReviewMetricsProps) {
@@ -13,7 +13,7 @@ export function ReviewMetrics({ pullRequest, pullRequestDiff, reviewRun }: Revie
       <section className="metrics-grid" aria-label="Review metrics">
         <Metric label="Risk score" value="--" detail="Choose a pull request" tone="risk" />
         <Metric label="Changed files" value="--" detail="Waiting for PR data" />
-        <Metric label="AI quota" value={`${reviewRun.quotaRemaining}/5`} detail="Daily reviews left" />
+        <Metric label="Analyzer" value="--" detail="No review run yet" />
         <Metric label="Cache key" value="--" detail="No PR selected" />
       </section>
     );
@@ -23,8 +23,8 @@ export function ReviewMetrics({ pullRequest, pullRequestDiff, reviewRun }: Revie
     <section className="metrics-grid" aria-label="Review metrics">
       <Metric
         label="Risk score"
-        value={`${reviewRun.riskScore}/100`}
-        detail="High attention"
+        value={reviewRun ? `${reviewRun.riskScore}/100` : '--'}
+        detail={reviewRun ? reviewRun.status : 'Run Analyze PR'}
         tone="risk"
       />
       <Metric
@@ -34,7 +34,11 @@ export function ReviewMetrics({ pullRequest, pullRequestDiff, reviewRun }: Revie
           pullRequestDiff?.deletions ?? pullRequest.deletions
         }`}
       />
-      <Metric label="AI quota" value={`${reviewRun.quotaRemaining}/5`} detail="Daily reviews left" />
+      <Metric
+        label="Analyzer"
+        value={reviewRun?.analyzer ?? '--'}
+        detail={reviewRun ? 'Latest review run' : 'No review run yet'}
+      />
       <Metric
         label="Head SHA"
         value={(pullRequestDiff?.headSha ?? pullRequest.headSha).slice(0, 7)}

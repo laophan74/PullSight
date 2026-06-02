@@ -1,4 +1,5 @@
 import { Bot, Clock3, Lock } from 'lucide-react';
+import type { PullRequestDiff, ReviewRun } from '../../types';
 
 const fallbackRules = [
   'Missing authorization',
@@ -8,7 +9,15 @@ const fallbackRules = [
   'Secrets and tokens',
 ];
 
-export function ReviewSidebar() {
+type ReviewSidebarProps = {
+  pullRequestDiff?: PullRequestDiff | null;
+  reviewRun?: ReviewRun | null;
+};
+
+export function ReviewSidebar({ pullRequestDiff, reviewRun }: ReviewSidebarProps) {
+  const hasDiff = Boolean(pullRequestDiff);
+  const hasReview = Boolean(reviewRun);
+
   return (
     <aside className="review-side" aria-label="Review context">
       <div className="side-section">
@@ -17,9 +26,8 @@ export function ReviewSidebar() {
           <Clock3 size={18} />
         </div>
         <ol className="timeline">
-          <li className="done">GitHub diff fetched</li>
-          <li className="done">Cache checked by head SHA</li>
-          <li className="done">AI review completed</li>
+          <li className={hasDiff ? 'done' : ''}>GitHub diff fetched</li>
+          <li className={hasReview ? 'done' : ''}>Analyzer completed</li>
           <li>Persist findings to Supabase</li>
         </ol>
       </div>

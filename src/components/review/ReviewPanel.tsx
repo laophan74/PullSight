@@ -10,7 +10,7 @@ type ReviewPanelProps = {
   analysisError?: string | null;
   pullRequest?: PullRequest;
   pullRequestDiff?: PullRequestDiff | null;
-  reviewRun: ReviewRun;
+  reviewRun?: ReviewRun | null;
   onSeverityChange: (severity: Severity | 'all') => void;
 };
 
@@ -46,13 +46,17 @@ export function ReviewPanel({
           <p className="eyebrow">Current review</p>
           <h2>{pullRequest.title}</h2>
         </div>
-        <span className={`status-pill ${reviewRun.status}`}>
-          <Sparkles size={15} />
-          {reviewRun.status}
-        </span>
+        {reviewRun ? (
+          <span className={`status-pill ${reviewRun.status}`}>
+            <Sparkles size={15} />
+            {reviewRun.status}
+          </span>
+        ) : null}
       </div>
 
-      <p className="review-summary">{reviewRun.summary}</p>
+      <p className="review-summary">
+        {reviewRun?.summary ?? 'Click Analyze PR to fetch the diff and run the AI review.'}
+      </p>
 
       <section className="diff-summary" aria-label="Pull request diff">
         <div className="section-heading compact">
@@ -98,7 +102,7 @@ export function ReviewPanel({
 
       <SeverityTabs
         activeSeverity={activeSeverity}
-        findings={reviewRun.findings}
+        findings={reviewRun?.findings ?? []}
         onChange={onSeverityChange}
       />
 

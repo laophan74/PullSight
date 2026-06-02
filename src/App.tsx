@@ -5,7 +5,6 @@ import { ReviewControls } from './components/review/ReviewControls';
 import { ReviewMetrics } from './components/review/ReviewMetrics';
 import { ReviewPanel } from './components/review/ReviewPanel';
 import { ReviewSidebar } from './components/review/ReviewSidebar';
-import { pullRequestsByRepo, repositories, reviewRun } from './data/mockReviewData';
 import { getGitHubLoginUrl } from './services/api';
 import { getCurrentUser, logout, type AuthUser } from './services/auth';
 import { getPullRequests } from './services/pullRequests';
@@ -18,31 +17,25 @@ export function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoginRedirecting, setIsLoginRedirecting] = useState(false);
-  const [availableRepositories, setAvailableRepositories] = useState<Repository[]>(repositories);
+  const [availableRepositories, setAvailableRepositories] = useState<Repository[]>([]);
   const [isRepositoryLoading, setIsRepositoryLoading] = useState(false);
   const [repositoryError, setRepositoryError] = useState<string | null>(null);
-  const [availablePullRequests, setAvailablePullRequests] = useState<PullRequest[]>(
-    pullRequestsByRepo[repositories[0].id] ?? [],
-  );
+  const [availablePullRequests, setAvailablePullRequests] = useState<PullRequest[]>([]);
   const [isPullRequestLoading, setIsPullRequestLoading] = useState(false);
   const [pullRequestError, setPullRequestError] = useState<string | null>(null);
   const [pullRequestDiff, setPullRequestDiff] = useState<PullRequestDiff | null>(null);
-  const [currentReviewRun, setCurrentReviewRun] = useState<ReviewRun>(reviewRun);
+  const [currentReviewRun, setCurrentReviewRun] = useState<ReviewRun | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [selectedRepoId, setSelectedRepoId] = useState<number | undefined>(repositories[0].id);
-  const selectedRepo =
-    availableRepositories.find((repo) => repo.id === selectedRepoId) ?? availableRepositories[0];
-  const [selectedPrId, setSelectedPrId] = useState<number | undefined>(
-    availablePullRequests[0]?.id,
-  );
-  const selectedPr =
-    availablePullRequests.find((pr) => pr.id === selectedPrId) ?? availablePullRequests[0];
+  const [selectedRepoId, setSelectedRepoId] = useState<number | undefined>();
+  const selectedRepo = availableRepositories.find((repo) => repo.id === selectedRepoId);
+  const [selectedPrId, setSelectedPrId] = useState<number | undefined>();
+  const selectedPr = availablePullRequests.find((pr) => pr.id === selectedPrId);
   const [activeSeverity, setActiveSeverity] = useState<Severity | 'all'>('all');
 
   const filteredFindings = useMemo(
-    () => getFilteredFindings(currentReviewRun.findings, activeSeverity),
-    [activeSeverity, currentReviewRun.findings],
+    () => getFilteredFindings(currentReviewRun?.findings ?? [], activeSeverity),
+    [activeSeverity, currentReviewRun?.findings],
   );
 
   useEffect(() => {
@@ -72,11 +65,12 @@ export function App() {
 
   useEffect(() => {
     if (!authUser) {
-      const firstDemoRepo = repositories[0];
-
-      setAvailableRepositories(repositories);
+      setAvailableRepositories([]);
+      setAvailablePullRequests([]);
       setRepositoryError(null);
-      setSelectedRepoId(firstDemoRepo?.id);
+      setPullRequestError(null);
+      setSelectedRepoId(undefined);
+      setSelectedPrId(undefined);
       return;
     }
 
@@ -90,7 +84,7 @@ export function App() {
   useEffect(() => {
     setPullRequestDiff(null);
     setAnalysisError(null);
-    setCurrentReviewRun(reviewRun);
+    setCurrentReviewRun(null);
   }, [selectedRepo?.id, selectedPr?.id]);
 
   useEffect(() => {
@@ -101,17 +95,8 @@ export function App() {
       return;
     }
 
-    if (!authUser) {
-      const demoPullRequests = pullRequestsByRepo[selectedRepo.id] ?? [];
-
-      setAvailablePullRequests(demoPullRequests);
-      setSelectedPrId(demoPullRequests[0]?.id);
-      setPullRequestError(null);
-      return;
-    }
-
     void loadPullRequests(selectedRepo);
-  }, [authUser, selectedRepo?.id]);
+  }, [selectedRepo?.id]);
 
   async function loadRepositories() {
     setIsRepositoryLoading(true);
@@ -235,7 +220,7 @@ export function App() {
             reviewRun={currentReviewRun}
             onSeverityChange={setActiveSeverity}
           />
-          <ReviewSidebar />
+          <ReviewSidebar pullRequestDiff={pullRequestDiff} reviewRun={currentReviewRun} />
         </section>
       </main>
     </div>
