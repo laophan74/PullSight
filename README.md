@@ -20,7 +20,6 @@ src/
     review/      Review workflow controls, metrics, findings, and side panel
     ui/          Small reusable presentational components
   constants/     Shared labels and display order
-  data/          Temporary mock data until the ASP.NET API is connected
   services/      API URL construction and auth API calls
   utils/         Pure helpers for filtering and deriving review state
   types.ts       Domain models shared across the frontend
@@ -32,7 +31,33 @@ src/
 - Login redirects to `GET /api/auth/github/login` on the ASP.NET backend.
 - Logout calls `POST /api/auth/logout`.
 - Auth requests use `credentials: 'include'` so the backend auth cookie is sent.
+- Repository Browser calls `GET /api/repositories` through `src/services/repositories.ts`.
+- Pull Request Browser calls `GET /api/repositories/{owner}/{name}/pull-requests` through `src/services/pullRequests.ts` when a repo is selected.
+- `Analyze PR` calls `POST /api/reviews/github` through `src/services/reviews.ts`.
+- The review response updates the risk score, analyzer status, summary, findings, changed-file metrics, and fetched diff list.
+- Mock repositories, pull requests, and review findings have been removed from the dashboard. Empty states are shown until real data is loaded.
 - All backend URLs are derived from `VITE_API_BASE_URL` in `src/services/api.ts`.
+
+Review result persistence, cache display, and quota display are not connected yet.
+
+## Production Test Data
+
+After logging in at `https://pull-sight.vercel.app`, select:
+
+```text
+laophan74/test-pull-requests
+```
+
+Expected open PRs:
+
+- `#5 Add PR review checklist`
+- `#6 Add pull request summary helper`
+- `#7 Add sample webhook handler`
+- `#8 Add release checklist`
+- `#9 Add discount calculator`
+- `#10 Add session token middleware`
+
+If these do not appear, refresh repositories, verify the backend deployment is awake, and confirm the GitHub OAuth token has repo access.
 
 ## Planned Backend
 
