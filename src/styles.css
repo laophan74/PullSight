@@ -266,6 +266,7 @@ h3 {
 }
 
 .control-strip {
+  align-items: flex-start;
   gap: 14px;
   margin-bottom: 18px;
   padding: 14px;
