@@ -8,10 +8,10 @@ import { ReviewSidebar } from './components/review/ReviewSidebar';
 import { pullRequestsByRepo, repositories, reviewRun } from './data/mockReviewData';
 import { getGitHubLoginUrl } from './services/api';
 import { getCurrentUser, logout, type AuthUser } from './services/auth';
-import { getPullRequestDiff } from './services/pullRequestDiff';
 import { getPullRequests } from './services/pullRequests';
 import { getRepositories } from './services/repositories';
-import type { PullRequest, PullRequestDiff, Repository, Severity } from './types';
+import { analyzePullRequest } from './services/reviews';
+import type { PullRequest, PullRequestDiff, Repository, ReviewRun, Severity } from './types';
 import { getFilteredFindings } from './utils/review';
 
 export function App() {
@@ -27,6 +27,7 @@ export function App() {
   const [isPullRequestLoading, setIsPullRequestLoading] = useState(false);
   const [pullRequestError, setPullRequestError] = useState<string | null>(null);
   const [pullRequestDiff, setPullRequestDiff] = useState<PullRequestDiff | null>(null);
+  const [currentReviewRun, setCurrentReviewRun] = useState<ReviewRun>(reviewRun);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [selectedRepoId, setSelectedRepoId] = useState<number | undefined>(repositories[0].id);
@@ -40,8 +41,8 @@ export function App() {
   const [activeSeverity, setActiveSeverity] = useState<Severity | 'all'>('all');
 
   const filteredFindings = useMemo(
-    () => getFilteredFindings(reviewRun.findings, activeSeverity),
-    [activeSeverity],
+    () => getFilteredFindings(currentReviewRun.findings, activeSeverity),
+    [activeSeverity, currentReviewRun.findings],
   );
 
   useEffect(() => {
@@ -89,6 +90,7 @@ export function App() {
   useEffect(() => {
     setPullRequestDiff(null);
     setAnalysisError(null);
+    setCurrentReviewRun(reviewRun);
   }, [selectedRepo?.id, selectedPr?.id]);
 
   useEffect(() => {
@@ -174,9 +176,11 @@ export function App() {
     setAnalysisError(null);
 
     try {
-      const diff = await getPullRequestDiff(selectedRepo.owner, selectedRepo.name, selectedPr.number);
+      const result = await analyzePullRequest(selectedRepo.owner, selectedRepo.name, selectedPr.number);
 
-      setPullRequestDiff(diff);
+      setPullRequestDiff(result.diff);
+      setCurrentReviewRun(result.reviewRun);
+      setActiveSeverity('all');
     } catch (error) {
       setAnalysisError(error instanceof Error ? error.message : 'Unable to analyze pull request.');
       setPullRequestDiff(null);
@@ -214,7 +218,11 @@ export function App() {
           onAnalyze={handleAnalyze}
         />
 
-        <ReviewMetrics pullRequest={selectedPr} pullRequestDiff={pullRequestDiff} reviewRun={reviewRun} />
+        <ReviewMetrics
+          pullRequest={selectedPr}
+          pullRequestDiff={pullRequestDiff}
+          reviewRun={currentReviewRun}
+        />
 
         <section className="review-layout">
           <ReviewPanel
@@ -224,7 +232,7 @@ export function App() {
             isAnalyzing={isAnalyzing}
             pullRequest={selectedPr}
             pullRequestDiff={pullRequestDiff}
-            reviewRun={reviewRun}
+            reviewRun={currentReviewRun}
             onSeverityChange={setActiveSeverity}
           />
           <ReviewSidebar />

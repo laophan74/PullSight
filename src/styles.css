@@ -532,6 +532,10 @@ h3 {
   border-left-color: var(--red);
 }
 
+.finding.critical {
+  border-left-color: var(--red);
+}
+
 .finding.medium {
   border-left-color: var(--amber);
 }
@@ -551,6 +555,11 @@ h3 {
 }
 
 .finding.high .finding-icon {
+  color: var(--red);
+  background: var(--red-soft);
+}
+
+.finding.critical .finding-icon {
   color: var(--red);
   background: var(--red-soft);
 }
