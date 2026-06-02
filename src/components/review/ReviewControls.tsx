@@ -48,15 +48,18 @@ export function ReviewControls({
         error={pullRequestError}
         onSelect={onPrSelect}
       />
-      <button
-        className="review-button"
-        type="button"
-        disabled={!selectedRepo || !selectedPr || isAnalyzing}
-        onClick={onAnalyze}
-      >
-        {isAnalyzing ? <LoaderCircle className="spin-icon" size={18} /> : <Play size={18} />}
-        {isAnalyzing ? 'Fetching diff' : 'Analyze PR'}
-      </button>
+      <div className="review-action-field">
+        <span aria-hidden="true">Action</span>
+        <button
+          className="review-button"
+          type="button"
+          disabled={!selectedRepo || !selectedPr || isAnalyzing}
+          onClick={onAnalyze}
+        >
+          {isAnalyzing ? <LoaderCircle className="spin-icon" size={18} /> : <Play size={18} />}
+          {isAnalyzing ? 'Fetching diff' : 'Analyze PR'}
+        </button>
+      </div>
     </section>
   );
 }

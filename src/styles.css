@@ -285,6 +285,20 @@ h3 {
   font-weight: 700;
 }
 
+.review-action-field {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 7px;
+  min-width: 150px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.review-action-field > span {
+  visibility: hidden;
+}
+
 .select-field div {
   gap: 8px;
   min-height: 44px;
@@ -315,7 +329,7 @@ h3 {
 }
 
 .review-button {
-  align-self: end;
+  width: 100%;
   background: var(--green);
 }
 
@@ -664,7 +678,8 @@ code {
   .topbar-actions,
   .primary-button,
   .secondary-button,
-  .review-button {
+  .review-button,
+  .review-action-field {
     width: 100%;
   }
 
