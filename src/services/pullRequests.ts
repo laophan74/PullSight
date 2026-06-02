@@ -41,7 +41,7 @@ export async function getPullRequests(owner: string, name: string): Promise<Pull
     author: pullRequest.author,
     branch: pullRequest.branch,
     targetBranch: pullRequest.targetBranch,
-    headSha: pullRequest.headSha.slice(0, 7),
+    headSha: pullRequest.headSha,
     changedFiles: pullRequest.changedFiles,
     additions: pullRequest.additions,
     deletions: pullRequest.deletions,

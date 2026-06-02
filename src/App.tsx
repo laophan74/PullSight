@@ -8,9 +8,10 @@ import { ReviewSidebar } from './components/review/ReviewSidebar';
 import { pullRequestsByRepo, repositories, reviewRun } from './data/mockReviewData';
 import { getGitHubLoginUrl } from './services/api';
 import { getCurrentUser, logout, type AuthUser } from './services/auth';
+import { getPullRequestDiff } from './services/pullRequestDiff';
 import { getPullRequests } from './services/pullRequests';
 import { getRepositories } from './services/repositories';
-import type { PullRequest, Repository, Severity } from './types';
+import type { PullRequest, PullRequestDiff, Repository, Severity } from './types';
 import { getFilteredFindings } from './utils/review';
 
 export function App() {
@@ -25,6 +26,9 @@ export function App() {
   );
   const [isPullRequestLoading, setIsPullRequestLoading] = useState(false);
   const [pullRequestError, setPullRequestError] = useState<string | null>(null);
+  const [pullRequestDiff, setPullRequestDiff] = useState<PullRequestDiff | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [selectedRepoId, setSelectedRepoId] = useState<number | undefined>(repositories[0].id);
   const selectedRepo =
     availableRepositories.find((repo) => repo.id === selectedRepoId) ?? availableRepositories[0];
@@ -81,6 +85,11 @@ export function App() {
     setSelectedPrId(undefined);
     void loadRepositories();
   }, [authUser]);
+
+  useEffect(() => {
+    setPullRequestDiff(null);
+    setAnalysisError(null);
+  }, [selectedRepo?.id, selectedPr?.id]);
 
   useEffect(() => {
     if (!selectedRepo) {
@@ -156,6 +165,26 @@ export function App() {
     setAuthUser(null);
   }
 
+  async function handleAnalyze() {
+    if (!selectedRepo || !selectedPr) {
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+
+    try {
+      const diff = await getPullRequestDiff(selectedRepo.owner, selectedRepo.name, selectedPr.number);
+
+      setPullRequestDiff(diff);
+    } catch (error) {
+      setAnalysisError(error instanceof Error ? error.message : 'Unable to analyze pull request.');
+      setPullRequestDiff(null);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
   return (
     <div className="app-shell">
       <Sidebar authUser={authUser} />
@@ -179,17 +208,22 @@ export function App() {
           selectedPr={selectedPr}
           isPullRequestLoading={isPullRequestLoading}
           pullRequestError={pullRequestError}
+          isAnalyzing={isAnalyzing}
           onRepoSelect={handleRepoChange}
           onPrSelect={setSelectedPrId}
+          onAnalyze={handleAnalyze}
         />
 
-        <ReviewMetrics pullRequest={selectedPr} reviewRun={reviewRun} />
+        <ReviewMetrics pullRequest={selectedPr} pullRequestDiff={pullRequestDiff} reviewRun={reviewRun} />
 
         <section className="review-layout">
           <ReviewPanel
             activeSeverity={activeSeverity}
+            analysisError={analysisError}
             filteredFindings={filteredFindings}
+            isAnalyzing={isAnalyzing}
             pullRequest={selectedPr}
+            pullRequestDiff={pullRequestDiff}
             reviewRun={reviewRun}
             onSeverityChange={setActiveSeverity}
           />

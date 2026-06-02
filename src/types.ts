@@ -29,6 +29,30 @@ export type PullRequest = {
   htmlUrl?: string;
 };
 
+export type PullRequestDiffFile = {
+  sha: string;
+  fileName: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch?: string | null;
+  blobUrl: string;
+  rawUrl: string;
+  previousFileName?: string | null;
+};
+
+export type PullRequestDiff = {
+  id: number;
+  number: number;
+  title: string;
+  headSha: string;
+  changedFiles: number;
+  additions: number;
+  deletions: number;
+  files: PullRequestDiffFile[];
+};
+
 export type ReviewFinding = {
   id: string;
   severity: Severity;

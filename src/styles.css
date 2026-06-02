@@ -403,6 +403,63 @@ h3 {
   line-height: 1.65;
 }
 
+.diff-summary {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbf8;
+}
+
+.diff-summary .section-heading {
+  margin-bottom: 0;
+}
+
+.diff-summary .section-heading span,
+.diff-meta span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.diff-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.diff-file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.diff-file {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--panel);
+  text-decoration: none;
+}
+
+.diff-file:hover {
+  border-color: #b8c9b9;
+}
+
+.diff-file span {
+  overflow-wrap: anywhere;
+  font-weight: 800;
+}
+
+.diff-file small {
+  color: var(--muted);
+}
+
 .severity-tabs {
   display: flex;
   flex-wrap: wrap;

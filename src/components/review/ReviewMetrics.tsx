@@ -1,12 +1,13 @@
-import type { PullRequest, ReviewRun } from '../../types';
+import type { PullRequest, PullRequestDiff, ReviewRun } from '../../types';
 import { Metric } from '../ui/Metric';
 
 type ReviewMetricsProps = {
   pullRequest?: PullRequest;
+  pullRequestDiff?: PullRequestDiff | null;
   reviewRun: ReviewRun;
 };
 
-export function ReviewMetrics({ pullRequest, reviewRun }: ReviewMetricsProps) {
+export function ReviewMetrics({ pullRequest, pullRequestDiff, reviewRun }: ReviewMetricsProps) {
   if (!pullRequest) {
     return (
       <section className="metrics-grid" aria-label="Review metrics">
@@ -28,11 +29,17 @@ export function ReviewMetrics({ pullRequest, reviewRun }: ReviewMetricsProps) {
       />
       <Metric
         label="Changed files"
-        value={String(pullRequest.changedFiles)}
-        detail={`+${pullRequest.additions} / -${pullRequest.deletions}`}
+        value={String(pullRequestDiff?.changedFiles ?? pullRequest.changedFiles)}
+        detail={`+${pullRequestDiff?.additions ?? pullRequest.additions} / -${
+          pullRequestDiff?.deletions ?? pullRequest.deletions
+        }`}
       />
       <Metric label="AI quota" value={`${reviewRun.quotaRemaining}/5`} detail="Daily reviews left" />
-      <Metric label="Cache key" value={pullRequest.headSha} detail={`PR #${pullRequest.number}`} />
+      <Metric
+        label="Head SHA"
+        value={(pullRequestDiff?.headSha ?? pullRequest.headSha).slice(0, 7)}
+        detail={`PR #${pullRequest.number}`}
+      />
     </section>
   );
 }

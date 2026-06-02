@@ -1,12 +1,15 @@
 import { Sparkles } from 'lucide-react';
-import type { PullRequest, ReviewFinding, ReviewRun, Severity } from '../../types';
+import type { PullRequest, PullRequestDiff, ReviewFinding, ReviewRun, Severity } from '../../types';
 import { FindingsList } from './FindingsList';
 import { SeverityTabs } from './SeverityTabs';
 
 type ReviewPanelProps = {
   activeSeverity: Severity | 'all';
   filteredFindings: ReviewFinding[];
+  isAnalyzing?: boolean;
+  analysisError?: string | null;
   pullRequest?: PullRequest;
+  pullRequestDiff?: PullRequestDiff | null;
   reviewRun: ReviewRun;
   onSeverityChange: (severity: Severity | 'all') => void;
 };
@@ -14,7 +17,10 @@ type ReviewPanelProps = {
 export function ReviewPanel({
   activeSeverity,
   filteredFindings,
+  isAnalyzing = false,
+  analysisError,
   pullRequest,
+  pullRequestDiff,
   reviewRun,
   onSeverityChange,
 }: ReviewPanelProps) {
@@ -47,6 +53,48 @@ export function ReviewPanel({
       </div>
 
       <p className="review-summary">{reviewRun.summary}</p>
+
+      <section className="diff-summary" aria-label="Pull request diff">
+        <div className="section-heading compact">
+          <h3>Fetched diff</h3>
+          {pullRequestDiff ? <span>{pullRequestDiff.files.length} files</span> : null}
+        </div>
+        {analysisError ? <p className="field-message error">{analysisError}</p> : null}
+        {isAnalyzing ? <p className="field-message">Fetching changed files from GitHub...</p> : null}
+        {!isAnalyzing && !analysisError && !pullRequestDiff ? (
+          <p className="field-message">Click Analyze PR to fetch changed files, patches, and head SHA.</p>
+        ) : null}
+        {pullRequestDiff ? (
+          <>
+            <div className="diff-meta">
+              <code>{pullRequestDiff.headSha}</code>
+              <span>
+                +{pullRequestDiff.additions} / -{pullRequestDiff.deletions}
+              </span>
+            </div>
+            <div className="diff-file-list">
+              {pullRequestDiff.files.map((file) => (
+                <a
+                  className="diff-file"
+                  href={file.blobUrl}
+                  key={`${file.sha}-${file.fileName}`}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <span>
+                    {file.fileName}
+                    {file.previousFileName ? ` from ${file.previousFileName}` : ''}
+                  </span>
+                  <small>
+                    {file.status} · +{file.additions} / -{file.deletions}
+                    {file.patch ? ` · ${file.patch.split('\n').length} patch lines` : ''}
+                  </small>
+                </a>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </section>
 
       <SeverityTabs
         activeSeverity={activeSeverity}
