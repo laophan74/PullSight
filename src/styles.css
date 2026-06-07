@@ -66,6 +66,7 @@ select:disabled {
 }
 
 .brand,
+.sidebar-header,
 .user-row,
 .nav-item,
 .topbar,
@@ -82,6 +83,23 @@ select:disabled {
 
 .brand {
   gap: 12px;
+}
+
+.sidebar-header {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.menu-button {
+  display: none;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--panel);
 }
 
 .brand-mark {
@@ -371,6 +389,22 @@ h3 {
   display: grid;
   align-content: start;
   gap: 8px;
+}
+
+.history-scroll {
+  display: grid;
+  gap: 8px;
+  max-height: 520px;
+  padding-right: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.history-scroll:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+  border-radius: 8px;
 }
 
 .history-item {
@@ -971,19 +1005,46 @@ code {
   }
 
   .sidebar {
-    position: static;
+    position: sticky;
+    z-index: 20;
+    top: 0;
     height: auto;
     padding: 18px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+    box-shadow: 0 10px 30px rgba(30, 43, 36, 0.08);
+    gap: 0;
+  }
+
+  .menu-button {
+    display: grid;
   }
 
   .nav-list {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: none;
+    grid-template-columns: 1fr;
+    gap: 7px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
   }
 
   .connection-panel {
     display: none;
+    margin-top: 14px;
+  }
+
+  .sidebar.menu-open .nav-list,
+  .sidebar.menu-open .connection-panel {
+    display: grid;
+  }
+
+  .sidebar.menu-open .connection-panel {
+    margin-top: 14px;
+  }
+
+  .sidebar.menu-open .user-row {
+    margin-top: 8px;
   }
 
   .review-layout,
@@ -1029,7 +1090,7 @@ code {
   }
 
   .nav-item {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .section-heading,
@@ -1054,5 +1115,9 @@ code {
   .compare-arrow {
     justify-self: center;
     transform: rotate(90deg);
+  }
+
+  .history-scroll {
+    max-height: 420px;
   }
 }

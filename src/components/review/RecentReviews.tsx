@@ -64,45 +64,52 @@ export function RecentReviews({
         <>
           <div className="history-grid">
             <div className="history-list">
-              {history.items.map((review) => (
-                <article
-                  className={`history-item ${selectedReview?.id === review.id ? 'active' : ''}`}
-                  key={review.id}
-                >
-                  <div className="history-item-title">
-                    <strong>{review.repositoryFullName}</strong>
-                    <span>PR #{review.pullRequestNumber}</span>
-                  </div>
-                  <span className="history-item-meta">
-                    <span className={`risk-badge risk-${getRiskLevel(review.riskScore)}`}>
-                      Risk {review.riskScore}
+              <div
+                aria-label="Saved review runs"
+                className="history-scroll"
+                role="region"
+                tabIndex={0}
+              >
+                {history.items.map((review) => (
+                  <article
+                    className={`history-item ${selectedReview?.id === review.id ? 'active' : ''}`}
+                    key={review.id}
+                  >
+                    <div className="history-item-title">
+                      <strong>{review.repositoryFullName}</strong>
+                      <span>PR #{review.pullRequestNumber}</span>
+                    </div>
+                    <span className="history-item-meta">
+                      <span className={`risk-badge risk-${getRiskLevel(review.riskScore)}`}>
+                        Risk {review.riskScore}
+                      </span>
+                      <span>{review.findingCount} findings</span>
+                      <span>{review.analyzer}</span>
                     </span>
-                    <span>{review.findingCount} findings</span>
-                    <span>{review.analyzer}</span>
-                  </span>
-                  <span className="history-item-time">
-                    <Clock3 size={14} />
-                    {formatDate(review.createdAt)}
-                  </span>
-                  <div className="history-item-actions">
-                    <label>
-                      <input
-                        checked={comparisonSelection.some((item) => item.id === review.id)}
-                        onChange={() => onComparisonToggle(review)}
-                        type="checkbox"
-                      />
-                      Compare
-                    </label>
-                    <button
-                      aria-label={`Open review for ${review.repositoryFullName} pull request ${review.pullRequestNumber}`}
-                      onClick={() => onReviewSelect(review.id)}
-                      type="button"
-                    >
-                      Open
-                    </button>
-                  </div>
-                </article>
-              ))}
+                    <span className="history-item-time">
+                      <Clock3 size={14} />
+                      {formatDate(review.createdAt)}
+                    </span>
+                    <div className="history-item-actions">
+                      <label>
+                        <input
+                          checked={comparisonSelection.some((item) => item.id === review.id)}
+                          onChange={() => onComparisonToggle(review)}
+                          type="checkbox"
+                        />
+                        Compare
+                      </label>
+                      <button
+                        aria-label={`Open review for ${review.repositoryFullName} pull request ${review.pullRequestNumber}`}
+                        onClick={() => onReviewSelect(review.id)}
+                        type="button"
+                      >
+                        Open
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
 
               {history.totalPages > 1 ? (
                 <div className="history-pagination">
