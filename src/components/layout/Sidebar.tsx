@@ -4,17 +4,19 @@ import {
   FileDiff,
   GitBranch,
   GitPullRequestArrow,
-  GitCompareArrows,
   History,
   ShieldCheck,
 } from 'lucide-react';
 import type { AuthUser } from '../../services/auth';
 
+export type DashboardView = 'reviews' | 'recent';
+
 type SidebarProps = {
   authUser: AuthUser | null;
+  activeView: DashboardView;
 };
 
-export function Sidebar({ authUser }: SidebarProps) {
+export function Sidebar({ authUser, activeView }: SidebarProps) {
   return (
     <aside className="sidebar" aria-label="PullSight navigation">
       <div className="brand">
@@ -28,17 +30,21 @@ export function Sidebar({ authUser }: SidebarProps) {
       </div>
 
       <nav className="nav-list" aria-label="Primary">
-        <a className="nav-item active" href="#dashboard">
+        <a
+          aria-current={activeView === 'reviews' ? 'page' : undefined}
+          className={`nav-item ${activeView === 'reviews' ? 'active' : ''}`}
+          href="#reviews"
+        >
           <FileDiff aria-hidden="true" size={18} />
           Reviews
         </a>
-        <a className="nav-item" href="#recent-reviews">
+        <a
+          aria-current={activeView === 'recent' ? 'page' : undefined}
+          className={`nav-item ${activeView === 'recent' ? 'active' : ''}`}
+          href="#recent"
+        >
           <History aria-hidden="true" size={18} />
           Recent
-        </a>
-        <a className="nav-item" href="#compare-reviews">
-          <GitCompareArrows aria-hidden="true" size={18} />
-          Compare
         </a>
         <a className="nav-item" href="#repositories">
           <GitPullRequestArrow aria-hidden="true" size={18} />

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Sidebar } from './components/layout/Sidebar';
+import { Sidebar, type DashboardView } from './components/layout/Sidebar';
 import { Topbar } from './components/layout/Topbar';
 import { ReviewControls } from './components/review/ReviewControls';
 import { ReviewMetrics } from './components/review/ReviewMetrics';
@@ -31,6 +31,7 @@ import type {
 import { getFilteredFindings } from './utils/review';
 
 export function App() {
+  const [activeView, setActiveView] = useState<DashboardView>(getViewFromHash);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoginRedirecting, setIsLoginRedirecting] = useState(false);
@@ -64,6 +65,22 @@ export function App() {
     () => getFilteredFindings(currentReviewRun?.findings ?? [], activeSeverity),
     [activeSeverity, currentReviewRun?.findings],
   );
+
+  useEffect(() => {
+    function handleHashChange() {
+      setActiveView(getViewFromHash());
+    }
+
+    window.addEventListener('hashchange', handleHashChange);
+
+    if (!window.location.hash) {
+      window.history.replaceState(null, '', '#reviews');
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -288,11 +305,14 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar authUser={authUser} />
+      <Sidebar activeView={activeView} authUser={authUser} />
 
-      <main className="workspace" id="dashboard">
+      <main className="workspace" id={activeView}>
         <Topbar
           authUser={authUser}
+          eyebrow={activeView === 'recent' ? 'Saved review intelligence' : undefined}
+          title={activeView === 'recent' ? 'Review history across commits' : undefined}
+          showRepositoryRefresh={activeView === 'reviews'}
           isAuthLoading={isAuthLoading || isLoginRedirecting}
           isRefreshingRepositories={isRepositoryLoading}
           onLogin={handleLogin}
@@ -300,63 +320,73 @@ export function App() {
           onRefreshRepositories={loadRepositories}
         />
 
-        <ReviewControls
-          repositories={availableRepositories}
-          selectedRepo={selectedRepo}
-          isRepositoryLoading={isRepositoryLoading}
-          repositoryError={repositoryError}
-          pullRequests={availablePullRequests}
-          selectedPr={selectedPr}
-          isPullRequestLoading={isPullRequestLoading}
-          pullRequestError={pullRequestError}
-          isAnalyzing={isAnalyzing}
-          onRepoSelect={handleRepoChange}
-          onPrSelect={setSelectedPrId}
-          onAnalyze={handleAnalyze}
-        />
+        {activeView === 'reviews' ? (
+          <>
+            <ReviewControls
+              repositories={availableRepositories}
+              selectedRepo={selectedRepo}
+              isRepositoryLoading={isRepositoryLoading}
+              repositoryError={repositoryError}
+              pullRequests={availablePullRequests}
+              selectedPr={selectedPr}
+              isPullRequestLoading={isPullRequestLoading}
+              pullRequestError={pullRequestError}
+              isAnalyzing={isAnalyzing}
+              onRepoSelect={handleRepoChange}
+              onPrSelect={setSelectedPrId}
+              onAnalyze={handleAnalyze}
+            />
 
-        <ReviewMetrics
-          pullRequest={selectedPr}
-          pullRequestDiff={pullRequestDiff}
-          reviewRun={currentReviewRun}
-        />
+            <ReviewMetrics
+              pullRequest={selectedPr}
+              pullRequestDiff={pullRequestDiff}
+              reviewRun={currentReviewRun}
+            />
 
-        <RecentReviews
-          detailError={historyDetailError}
-          error={historyError}
-          history={reviewHistory}
-          isDetailLoading={isHistoryDetailLoading}
-          isLoading={isHistoryLoading}
-          selectedReview={selectedHistoryReview}
-          comparisonSelection={comparisonSelection}
-          onPageChange={loadReviewHistory}
-          onReviewSelect={handleHistoryReviewSelect}
-          onComparisonToggle={handleComparisonToggle}
-        />
+            <section className="review-layout">
+              <ReviewPanel
+                activeSeverity={activeSeverity}
+                analysisError={analysisError}
+                filteredFindings={filteredFindings}
+                isAnalyzing={isAnalyzing}
+                pullRequest={selectedPr}
+                pullRequestDiff={pullRequestDiff}
+                reviewRun={currentReviewRun}
+                onSeverityChange={setActiveSeverity}
+              />
+              <ReviewSidebar pullRequestDiff={pullRequestDiff} reviewRun={currentReviewRun} />
+            </section>
+          </>
+        ) : (
+          <>
+            <RecentReviews
+              detailError={historyDetailError}
+              error={historyError}
+              history={reviewHistory}
+              isDetailLoading={isHistoryDetailLoading}
+              isLoading={isHistoryLoading}
+              selectedReview={selectedHistoryReview}
+              comparisonSelection={comparisonSelection}
+              onPageChange={loadReviewHistory}
+              onReviewSelect={handleHistoryReviewSelect}
+              onComparisonToggle={handleComparisonToggle}
+            />
 
-        <CompareReviews
-          comparison={reviewComparison}
-          error={comparisonError}
-          isLoading={isComparisonLoading}
-          selectedReviews={comparisonSelection}
-          onClear={handleComparisonClear}
-          onCompare={handleCompareReviews}
-        />
-
-        <section className="review-layout">
-          <ReviewPanel
-            activeSeverity={activeSeverity}
-            analysisError={analysisError}
-            filteredFindings={filteredFindings}
-            isAnalyzing={isAnalyzing}
-            pullRequest={selectedPr}
-            pullRequestDiff={pullRequestDiff}
-            reviewRun={currentReviewRun}
-            onSeverityChange={setActiveSeverity}
-          />
-          <ReviewSidebar pullRequestDiff={pullRequestDiff} reviewRun={currentReviewRun} />
-        </section>
+            <CompareReviews
+              comparison={reviewComparison}
+              error={comparisonError}
+              isLoading={isComparisonLoading}
+              selectedReviews={comparisonSelection}
+              onClear={handleComparisonClear}
+              onCompare={handleCompareReviews}
+            />
+          </>
+        )}
       </main>
     </div>
   );
+}
+
+function getViewFromHash(): DashboardView {
+  return window.location.hash === '#recent' ? 'recent' : 'reviews';
 }

@@ -40,6 +40,7 @@ src/
 - Review history includes loading, empty, error, pagination, and saved detail states.
 - Recent Reviews allows selecting two runs, and Compare Reviews displays base/target head SHAs plus added, resolved, and unchanged finding groups.
 - Comparison includes loading, empty, validation, and API error states.
+- Sidebar navigation separates the dashboard into `#reviews` for active PR analysis and `#recent` for saved results plus comparisons.
 - Mock repositories, pull requests, and review findings have been removed from the dashboard. Empty states are shown until real data is loaded.
 - All backend URLs are derived from `VITE_API_BASE_URL` in `src/services/api.ts`.
 
