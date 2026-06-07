@@ -104,3 +104,11 @@ export type ReviewHistoryPage = {
 export type ReviewHistoryDetail = ReviewHistoryItem & {
   findings: ReviewFinding[];
 };
+
+export type ReviewComparison = {
+  baseRun: ReviewHistoryItem;
+  targetRun: ReviewHistoryItem;
+  added: ReviewFinding[];
+  resolved: ReviewFinding[];
+  unchanged: ReviewFinding[];
+};

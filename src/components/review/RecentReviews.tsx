@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Clock3, History, LoaderCircle } from 'lucide-react';
-import type { ReviewHistoryDetail, ReviewHistoryPage } from '../../types';
+import type { ReviewHistoryDetail, ReviewHistoryItem, ReviewHistoryPage } from '../../types';
 import { FindingsList } from './FindingsList';
 
 type RecentReviewsProps = {
@@ -9,8 +9,10 @@ type RecentReviewsProps = {
   isDetailLoading: boolean;
   error: string | null;
   detailError: string | null;
+  comparisonSelection: ReviewHistoryItem[];
   onPageChange: (page: number) => void;
   onReviewSelect: (reviewId: string) => void;
+  onComparisonToggle: (review: ReviewHistoryItem) => void;
 };
 
 export function RecentReviews({
@@ -20,8 +22,10 @@ export function RecentReviews({
   isDetailLoading,
   error,
   detailError,
+  comparisonSelection,
   onPageChange,
   onReviewSelect,
+  onComparisonToggle,
 }: RecentReviewsProps) {
   return (
     <section className="history-section" id="recent-reviews" aria-labelledby="recent-reviews-title">
@@ -61,16 +65,14 @@ export function RecentReviews({
           <div className="history-grid">
             <div className="history-list">
               {history.items.map((review) => (
-                <button
+                <article
                   className={`history-item ${selectedReview?.id === review.id ? 'active' : ''}`}
                   key={review.id}
-                  onClick={() => onReviewSelect(review.id)}
-                  type="button"
                 >
-                  <span className="history-item-title">
+                  <div className="history-item-title">
                     <strong>{review.repositoryFullName}</strong>
                     <span>PR #{review.pullRequestNumber}</span>
-                  </span>
+                  </div>
                   <span className="history-item-meta">
                     <span className={`risk-badge risk-${getRiskLevel(review.riskScore)}`}>
                       Risk {review.riskScore}
@@ -82,7 +84,24 @@ export function RecentReviews({
                     <Clock3 size={14} />
                     {formatDate(review.createdAt)}
                   </span>
-                </button>
+                  <div className="history-item-actions">
+                    <label>
+                      <input
+                        checked={comparisonSelection.some((item) => item.id === review.id)}
+                        onChange={() => onComparisonToggle(review)}
+                        type="checkbox"
+                      />
+                      Compare
+                    </label>
+                    <button
+                      aria-label={`Open review for ${review.repositoryFullName} pull request ${review.pullRequestNumber}`}
+                      onClick={() => onReviewSelect(review.id)}
+                      type="button"
+                    >
+                      Open
+                    </button>
+                  </div>
+                </article>
               ))}
 
               {history.totalPages > 1 ? (

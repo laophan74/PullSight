@@ -5,18 +5,26 @@ import { ReviewControls } from './components/review/ReviewControls';
 import { ReviewMetrics } from './components/review/ReviewMetrics';
 import { ReviewPanel } from './components/review/ReviewPanel';
 import { RecentReviews } from './components/review/RecentReviews';
+import { CompareReviews } from './components/review/CompareReviews';
 import { ReviewSidebar } from './components/review/ReviewSidebar';
 import { getGitHubLoginUrl } from './services/api';
 import { getCurrentUser, logout, type AuthUser } from './services/auth';
 import { getPullRequests } from './services/pullRequests';
 import { getRepositories } from './services/repositories';
-import { analyzePullRequest, getReviewHistory, getReviewHistoryDetail } from './services/reviews';
+import {
+  analyzePullRequest,
+  compareReviews,
+  getReviewHistory,
+  getReviewHistoryDetail,
+} from './services/reviews';
 import type {
   PullRequest,
   PullRequestDiff,
   Repository,
   ReviewHistoryDetail,
+  ReviewHistoryItem,
   ReviewHistoryPage,
+  ReviewComparison,
   ReviewRun,
   Severity,
 } from './types';
@@ -47,6 +55,10 @@ export function App() {
   const [isHistoryDetailLoading, setIsHistoryDetailLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyDetailError, setHistoryDetailError] = useState<string | null>(null);
+  const [comparisonSelection, setComparisonSelection] = useState<ReviewHistoryItem[]>([]);
+  const [reviewComparison, setReviewComparison] = useState<ReviewComparison | null>(null);
+  const [isComparisonLoading, setIsComparisonLoading] = useState(false);
+  const [comparisonError, setComparisonError] = useState<string | null>(null);
 
   const filteredFindings = useMemo(
     () => getFilteredFindings(currentReviewRun?.findings ?? [], activeSeverity),
@@ -88,6 +100,8 @@ export function App() {
       setSelectedPrId(undefined);
       setReviewHistory(null);
       setSelectedHistoryReview(null);
+      setComparisonSelection([]);
+      setReviewComparison(null);
       return;
     }
 
@@ -191,6 +205,50 @@ export function App() {
     }
   }
 
+  function handleComparisonToggle(review: ReviewHistoryItem) {
+    setComparisonError(null);
+    setReviewComparison(null);
+    setComparisonSelection((currentSelection) => {
+      if (currentSelection.some((item) => item.id === review.id)) {
+        return currentSelection.filter((item) => item.id !== review.id);
+      }
+
+      if (currentSelection.length >= 2) {
+        return [currentSelection[1], review];
+      }
+
+      return [...currentSelection, review];
+    });
+  }
+
+  async function handleCompareReviews() {
+    if (comparisonSelection.length !== 2) {
+      return;
+    }
+
+    setIsComparisonLoading(true);
+    setComparisonError(null);
+
+    try {
+      setReviewComparison(
+        await compareReviews(comparisonSelection[0].id, comparisonSelection[1].id),
+      );
+    } catch (error) {
+      setComparisonError(
+        error instanceof Error ? error.message : 'Unable to compare the selected reviews.',
+      );
+      setReviewComparison(null);
+    } finally {
+      setIsComparisonLoading(false);
+    }
+  }
+
+  function handleComparisonClear() {
+    setComparisonSelection([]);
+    setReviewComparison(null);
+    setComparisonError(null);
+  }
+
   function handleRepoChange(repoId: number) {
     setSelectedRepoId(repoId);
   }
@@ -270,8 +328,19 @@ export function App() {
           isDetailLoading={isHistoryDetailLoading}
           isLoading={isHistoryLoading}
           selectedReview={selectedHistoryReview}
+          comparisonSelection={comparisonSelection}
           onPageChange={loadReviewHistory}
           onReviewSelect={handleHistoryReviewSelect}
+          onComparisonToggle={handleComparisonToggle}
+        />
+
+        <CompareReviews
+          comparison={reviewComparison}
+          error={comparisonError}
+          isLoading={isComparisonLoading}
+          selectedReviews={comparisonSelection}
+          onClear={handleComparisonClear}
+          onCompare={handleCompareReviews}
         />
 
         <section className="review-layout">

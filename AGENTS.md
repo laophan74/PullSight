@@ -28,6 +28,8 @@ GitHub login is already wired through backend auth endpoints and uses cookie cre
 
 Recent Reviews is implemented through `src/services/reviews.ts` and `src/components/review/RecentReviews.tsx`. Keep history API calls in the service layer and selection/loading orchestration in `App.tsx`.
 
+Compare Reviews is implemented through `POST /api/reviews/compare` and `src/components/review/CompareReviews.tsx`. Keep API calls in `src/services/reviews.ts` and comparison selection/loading orchestration in `App.tsx`.
+
 ## Standards
 
 - Use React + TypeScript.

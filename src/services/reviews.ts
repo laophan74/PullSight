@@ -2,6 +2,7 @@ import { apiUrl } from './api';
 import type {
   PullRequestDiff,
   ReviewFinding,
+  ReviewComparison,
   ReviewHistoryDetail,
   ReviewHistoryPage,
   ReviewRun,
@@ -56,6 +57,18 @@ type ReviewHistoryItemResponse = {
 
 type ReviewHistoryDetailResponse = ReviewHistoryItemResponse & {
   findings: ReviewFindingResponse[];
+};
+
+type ReviewComparisonResponse = {
+  baseRun: ReviewHistoryItemResponse;
+  targetRun: ReviewHistoryItemResponse;
+  added: ReviewFindingResponse[];
+  resolved: ReviewFindingResponse[];
+  unchanged: ReviewFindingResponse[];
+};
+
+type ProblemDetailsResponse = {
+  detail?: string;
 };
 
 export async function analyzePullRequest(
@@ -146,4 +159,32 @@ export async function getReviewHistoryDetail(reviewId: string): Promise<ReviewHi
   }
 
   return (await response.json()) as ReviewHistoryDetailResponse;
+}
+
+export async function compareReviews(
+  baseReviewRunId: string,
+  targetReviewRunId: string,
+): Promise<ReviewComparison> {
+  const response = await fetch(apiUrl('/api/reviews/compare'), {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      baseReviewRunId,
+      targetReviewRunId,
+    }),
+  });
+
+  if (response.status === 401) {
+    throw new Error('Login with GitHub to compare saved reviews.');
+  }
+
+  if (!response.ok) {
+    const problem = (await response.json().catch(() => null)) as ProblemDetailsResponse | null;
+    throw new Error(problem?.detail ?? 'Unable to compare the selected reviews.');
+  }
+
+  return (await response.json()) as ReviewComparisonResponse;
 }

@@ -4,6 +4,7 @@ import {
   FileDiff,
   GitBranch,
   GitPullRequestArrow,
+  GitCompareArrows,
   History,
   ShieldCheck,
 } from 'lucide-react';
@@ -34,6 +35,10 @@ export function Sidebar({ authUser }: SidebarProps) {
         <a className="nav-item" href="#recent-reviews">
           <History aria-hidden="true" size={18} />
           Recent
+        </a>
+        <a className="nav-item" href="#compare-reviews">
+          <GitCompareArrows aria-hidden="true" size={18} />
+          Compare
         </a>
         <a className="nav-item" href="#repositories">
           <GitPullRequestArrow aria-hidden="true" size={18} />
