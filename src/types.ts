@@ -78,3 +78,29 @@ export type ReviewRun = {
   summary: string;
   findings: ReviewFinding[];
 };
+
+export type ReviewHistoryItem = {
+  id: string;
+  repositoryFullName: string;
+  pullRequestNumber: number;
+  headSha: string;
+  status: 'completed' | 'fallback';
+  source: 'ai' | 'rule';
+  analyzer: string;
+  riskScore: number;
+  summary: string;
+  findingCount: number;
+  createdAt: string;
+};
+
+export type ReviewHistoryPage = {
+  items: ReviewHistoryItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+};
+
+export type ReviewHistoryDetail = ReviewHistoryItem & {
+  findings: ReviewFinding[];
+};

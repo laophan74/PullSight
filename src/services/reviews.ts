@@ -1,5 +1,11 @@
 import { apiUrl } from './api';
-import type { PullRequestDiff, ReviewFinding, ReviewRun } from '../types';
+import type {
+  PullRequestDiff,
+  ReviewFinding,
+  ReviewHistoryDetail,
+  ReviewHistoryPage,
+  ReviewRun,
+} from '../types';
 
 type PullRequestReviewResponse = {
   reviewRun: ReviewRunResponse;
@@ -28,6 +34,28 @@ type ReviewFindingResponse = {
   title: string;
   detail: string;
   source: ReviewFinding['source'];
+};
+
+type ReviewHistoryPageResponse = Omit<ReviewHistoryPage, 'items'> & {
+  items: ReviewHistoryItemResponse[];
+};
+
+type ReviewHistoryItemResponse = {
+  id: string;
+  repositoryFullName: string;
+  pullRequestNumber: number;
+  headSha: string;
+  status: ReviewHistoryDetail['status'];
+  source: ReviewHistoryDetail['source'];
+  analyzer: string;
+  riskScore: number;
+  summary: string;
+  findingCount: number;
+  createdAt: string;
+};
+
+type ReviewHistoryDetailResponse = ReviewHistoryItemResponse & {
+  findings: ReviewFindingResponse[];
 };
 
 export async function analyzePullRequest(
@@ -82,4 +110,40 @@ export async function analyzePullRequest(
       })),
     },
   };
+}
+
+export async function getReviewHistory(page = 1, pageSize = 10): Promise<ReviewHistoryPage> {
+  const response = await fetch(apiUrl(`/api/reviews?page=${page}&pageSize=${pageSize}`), {
+    credentials: 'include',
+  });
+
+  if (response.status === 401) {
+    throw new Error('Login with GitHub to view recent reviews.');
+  }
+
+  if (!response.ok) {
+    throw new Error('Unable to load recent reviews.');
+  }
+
+  return (await response.json()) as ReviewHistoryPageResponse;
+}
+
+export async function getReviewHistoryDetail(reviewId: string): Promise<ReviewHistoryDetail> {
+  const response = await fetch(apiUrl(`/api/reviews/${reviewId}`), {
+    credentials: 'include',
+  });
+
+  if (response.status === 401) {
+    throw new Error('Login with GitHub to open saved reviews.');
+  }
+
+  if (response.status === 404) {
+    throw new Error('This saved review was not found.');
+  }
+
+  if (!response.ok) {
+    throw new Error('Unable to open the saved review.');
+  }
+
+  return (await response.json()) as ReviewHistoryDetailResponse;
 }

@@ -36,6 +36,8 @@ src/
 - `Analyze PR` calls `POST /api/reviews/github` through `src/services/reviews.ts`.
 - The review response updates the risk score, analyzer status, summary, findings, changed-file metrics, and fetched diff list.
 - Persisted results display `completed` or `fallback`; repeated analysis of the same PR head SHA displays `cached`.
+- Recent Reviews calls `GET /api/reviews` with pagination and opens persisted findings through `GET /api/reviews/{reviewRunId}`.
+- Review history includes loading, empty, error, pagination, and saved detail states.
 - Mock repositories, pull requests, and review findings have been removed from the dashboard. Empty states are shown until real data is loaded.
 - All backend URLs are derived from `VITE_API_BASE_URL` in `src/services/api.ts`.
 
@@ -72,7 +74,7 @@ If these do not appear, refresh repositories, verify the backend deployment is a
 
 ## Next Frontend Feature
 
-Add a Recent Reviews view that lists persisted review runs and lets the user reopen saved findings.
+Add comparison UI for two saved reviews from different PR head SHAs.
 
 ## Local Development
 

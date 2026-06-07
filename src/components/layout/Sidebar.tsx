@@ -4,6 +4,7 @@ import {
   FileDiff,
   GitBranch,
   GitPullRequestArrow,
+  History,
   ShieldCheck,
 } from 'lucide-react';
 import type { AuthUser } from '../../services/auth';
@@ -29,6 +30,10 @@ export function Sidebar({ authUser }: SidebarProps) {
         <a className="nav-item active" href="#dashboard">
           <FileDiff aria-hidden="true" size={18} />
           Reviews
+        </a>
+        <a className="nav-item" href="#recent-reviews">
+          <History aria-hidden="true" size={18} />
+          Recent
         </a>
         <a className="nav-item" href="#repositories">
           <GitPullRequestArrow aria-hidden="true" size={18} />

@@ -26,6 +26,8 @@ VITE_API_BASE_URL=https://pullsight-backend.onrender.com
 
 GitHub login is already wired through backend auth endpoints and uses cookie credentials.
 
+Recent Reviews is implemented through `src/services/reviews.ts` and `src/components/review/RecentReviews.tsx`. Keep history API calls in the service layer and selection/loading orchestration in `App.tsx`.
+
 ## Standards
 
 - Use React + TypeScript.

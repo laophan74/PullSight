@@ -4,13 +4,22 @@ import { Topbar } from './components/layout/Topbar';
 import { ReviewControls } from './components/review/ReviewControls';
 import { ReviewMetrics } from './components/review/ReviewMetrics';
 import { ReviewPanel } from './components/review/ReviewPanel';
+import { RecentReviews } from './components/review/RecentReviews';
 import { ReviewSidebar } from './components/review/ReviewSidebar';
 import { getGitHubLoginUrl } from './services/api';
 import { getCurrentUser, logout, type AuthUser } from './services/auth';
 import { getPullRequests } from './services/pullRequests';
 import { getRepositories } from './services/repositories';
-import { analyzePullRequest } from './services/reviews';
-import type { PullRequest, PullRequestDiff, Repository, ReviewRun, Severity } from './types';
+import { analyzePullRequest, getReviewHistory, getReviewHistoryDetail } from './services/reviews';
+import type {
+  PullRequest,
+  PullRequestDiff,
+  Repository,
+  ReviewHistoryDetail,
+  ReviewHistoryPage,
+  ReviewRun,
+  Severity,
+} from './types';
 import { getFilteredFindings } from './utils/review';
 
 export function App() {
@@ -32,6 +41,12 @@ export function App() {
   const [selectedPrId, setSelectedPrId] = useState<number | undefined>();
   const selectedPr = availablePullRequests.find((pr) => pr.id === selectedPrId);
   const [activeSeverity, setActiveSeverity] = useState<Severity | 'all'>('all');
+  const [reviewHistory, setReviewHistory] = useState<ReviewHistoryPage | null>(null);
+  const [selectedHistoryReview, setSelectedHistoryReview] = useState<ReviewHistoryDetail | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [isHistoryDetailLoading, setIsHistoryDetailLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyDetailError, setHistoryDetailError] = useState<string | null>(null);
 
   const filteredFindings = useMemo(
     () => getFilteredFindings(currentReviewRun?.findings ?? [], activeSeverity),
@@ -71,6 +86,8 @@ export function App() {
       setPullRequestError(null);
       setSelectedRepoId(undefined);
       setSelectedPrId(undefined);
+      setReviewHistory(null);
+      setSelectedHistoryReview(null);
       return;
     }
 
@@ -79,6 +96,7 @@ export function App() {
     setAvailablePullRequests([]);
     setSelectedPrId(undefined);
     void loadRepositories();
+    void loadReviewHistory(1);
   }, [authUser]);
 
   useEffect(() => {
@@ -138,6 +156,41 @@ export function App() {
     }
   }
 
+  async function loadReviewHistory(page: number) {
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+
+    try {
+      const history = await getReviewHistory(page);
+      setReviewHistory(history);
+
+      if (
+        selectedHistoryReview &&
+        !history.items.some((review) => review.id === selectedHistoryReview.id)
+      ) {
+        setSelectedHistoryReview(null);
+      }
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : 'Unable to load recent reviews.');
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }
+
+  async function handleHistoryReviewSelect(reviewId: string) {
+    setIsHistoryDetailLoading(true);
+    setHistoryDetailError(null);
+
+    try {
+      setSelectedHistoryReview(await getReviewHistoryDetail(reviewId));
+    } catch (error) {
+      setHistoryDetailError(error instanceof Error ? error.message : 'Unable to open saved review.');
+      setSelectedHistoryReview(null);
+    } finally {
+      setIsHistoryDetailLoading(false);
+    }
+  }
+
   function handleRepoChange(repoId: number) {
     setSelectedRepoId(repoId);
   }
@@ -166,6 +219,7 @@ export function App() {
       setPullRequestDiff(result.diff);
       setCurrentReviewRun(result.reviewRun);
       setActiveSeverity('all');
+      void loadReviewHistory(1);
     } catch (error) {
       setAnalysisError(error instanceof Error ? error.message : 'Unable to analyze pull request.');
       setPullRequestDiff(null);
@@ -207,6 +261,17 @@ export function App() {
           pullRequest={selectedPr}
           pullRequestDiff={pullRequestDiff}
           reviewRun={currentReviewRun}
+        />
+
+        <RecentReviews
+          detailError={historyDetailError}
+          error={historyError}
+          history={reviewHistory}
+          isDetailLoading={isHistoryDetailLoading}
+          isLoading={isHistoryLoading}
+          selectedReview={selectedHistoryReview}
+          onPageChange={loadReviewHistory}
+          onReviewSelect={handleHistoryReviewSelect}
         />
 
         <section className="review-layout">
