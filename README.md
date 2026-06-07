@@ -6,7 +6,7 @@ PullSight is an AI-assisted GitHub pull request review dashboard built as a full
 
 - GitHub OAuth entry state and logged-in user display
 - Repository and pull request selectors
-- PR risk score, changed-file metrics, quota, and cache key summary
+- PR risk score, changed-file metrics, analyzer, head SHA, and cache status
 - Review findings grouped by severity
 - AI analyzer and static fallback pipeline status
 - Responsive dashboard layout for desktop and mobile
@@ -35,10 +35,11 @@ src/
 - Pull Request Browser calls `GET /api/repositories/{owner}/{name}/pull-requests` through `src/services/pullRequests.ts` when a repo is selected.
 - `Analyze PR` calls `POST /api/reviews/github` through `src/services/reviews.ts`.
 - The review response updates the risk score, analyzer status, summary, findings, changed-file metrics, and fetched diff list.
+- Persisted results display `completed` or `fallback`; repeated analysis of the same PR head SHA displays `cached`.
 - Mock repositories, pull requests, and review findings have been removed from the dashboard. Empty states are shown until real data is loaded.
 - All backend URLs are derived from `VITE_API_BASE_URL` in `src/services/api.ts`.
 
-Review result persistence, cache display, and quota display are not connected yet.
+Review persistence and cache display are connected. Daily quota display/enforcement is deferred.
 
 ## Production Test Data
 
@@ -59,14 +60,19 @@ Expected open PRs:
 
 If these do not appear, refresh repositories, verify the backend deployment is awake, and confirm the GitHub OAuth token has repo access.
 
-## Planned Backend
+## Backend Integration
 
 - ASP.NET Core Web API
 - EF Core + Npgsql with Supabase Postgres
 - GitHub OAuth and GitHub API integration
 - AI provider abstraction for Gemini, Groq, OpenRouter, or GitHub Models
-- Rule-based analyzer fallback when AI quota is unavailable
+- Rule-based analyzer fallback when Gemini is unavailable
+- Persisted review runs/findings
 - Review cache by repository, PR number, and head SHA
+
+## Next Frontend Feature
+
+Add a Recent Reviews view that lists persisted review runs and lets the user reopen saved findings.
 
 ## Local Development
 

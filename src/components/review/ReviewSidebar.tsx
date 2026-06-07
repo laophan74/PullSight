@@ -17,6 +17,7 @@ type ReviewSidebarProps = {
 export function ReviewSidebar({ pullRequestDiff, reviewRun }: ReviewSidebarProps) {
   const hasDiff = Boolean(pullRequestDiff);
   const hasReview = Boolean(reviewRun);
+  const isPersisted = hasReview && !reviewRun?.summary.includes('Review storage is temporarily unavailable');
 
   return (
     <aside className="review-side" aria-label="Review context">
@@ -28,7 +29,7 @@ export function ReviewSidebar({ pullRequestDiff, reviewRun }: ReviewSidebarProps
         <ol className="timeline">
           <li className={hasDiff ? 'done' : ''}>GitHub diff fetched</li>
           <li className={hasReview ? 'done' : ''}>Analyzer completed</li>
-          <li>Persist findings to Supabase</li>
+          <li className={isPersisted ? 'done' : ''}>Persist findings to Supabase</li>
         </ol>
       </div>
 
@@ -48,7 +49,7 @@ export function ReviewSidebar({ pullRequestDiff, reviewRun }: ReviewSidebarProps
         <Lock size={18} />
         <p>
           Free-tier friendly by design: reviews run on demand, cache by PR head SHA, and fall back
-          to static analysis when AI quota is unavailable.
+          to static analysis when Gemini is unavailable.
         </p>
       </div>
     </aside>
