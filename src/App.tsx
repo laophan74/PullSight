@@ -14,8 +14,13 @@ import { getRepositories } from './services/repositories';
 import {
   analyzePullRequest,
   compareReviews,
+  exportComparison,
+  exportReview,
   getReviewHistory,
   getReviewHistoryDetail,
+  publishComparison,
+  publishReview,
+  saveDownloadedReport,
 } from './services/reviews';
 import type {
   PullRequest,
@@ -24,8 +29,10 @@ import type {
   ReviewHistoryDetail,
   ReviewHistoryItem,
   ReviewHistoryPage,
+  ReviewHistoryFilters,
   ReviewComparison,
   ReviewRun,
+  ReportFormat,
   Severity,
 } from './types';
 import { getFilteredFindings } from './utils/review';
@@ -60,6 +67,15 @@ export function App() {
   const [reviewComparison, setReviewComparison] = useState<ReviewComparison | null>(null);
   const [isComparisonLoading, setIsComparisonLoading] = useState(false);
   const [comparisonError, setComparisonError] = useState<string | null>(null);
+  const [historyFilters, setHistoryFilters] = useState<ReviewHistoryFilters>(emptyHistoryFilters);
+  const [isReviewExporting, setIsReviewExporting] = useState(false);
+  const [isReviewPublishing, setIsReviewPublishing] = useState(false);
+  const [reviewActionMessage, setReviewActionMessage] = useState<string | null>(null);
+  const [reviewActionError, setReviewActionError] = useState<string | null>(null);
+  const [isComparisonExporting, setIsComparisonExporting] = useState(false);
+  const [isComparisonPublishing, setIsComparisonPublishing] = useState(false);
+  const [comparisonActionMessage, setComparisonActionMessage] = useState<string | null>(null);
+  const [comparisonActionError, setComparisonActionError] = useState<string | null>(null);
 
   const filteredFindings = useMemo(
     () => getFilteredFindings(currentReviewRun?.findings ?? [], activeSeverity),
@@ -127,8 +143,29 @@ export function App() {
     setAvailablePullRequests([]);
     setSelectedPrId(undefined);
     void loadRepositories();
-    void loadReviewHistory(1);
   }, [authUser]);
+
+  useEffect(() => {
+    if (!authUser) {
+      return;
+    }
+
+    setSelectedHistoryReview(null);
+    setComparisonSelection([]);
+    setReviewComparison(null);
+    setComparisonError(null);
+    setReviewActionMessage(null);
+    setReviewActionError(null);
+    setComparisonActionMessage(null);
+    setComparisonActionError(null);
+    void loadReviewHistory(1, historyFilters);
+  }, [
+    authUser,
+    historyFilters.repository,
+    historyFilters.pullRequestNumber,
+    historyFilters.source,
+    historyFilters.status,
+  ]);
 
   useEffect(() => {
     setPullRequestDiff(null);
@@ -187,12 +224,12 @@ export function App() {
     }
   }
 
-  async function loadReviewHistory(page: number) {
+  async function loadReviewHistory(page: number, filters = historyFilters) {
     setIsHistoryLoading(true);
     setHistoryError(null);
 
     try {
-      const history = await getReviewHistory(page);
+      const history = await getReviewHistory(page, 10, filters);
       setReviewHistory(history);
 
       if (
@@ -264,6 +301,97 @@ export function App() {
     setComparisonSelection([]);
     setReviewComparison(null);
     setComparisonError(null);
+  }
+
+  function handleHistoryFiltersChange(filters: ReviewHistoryFilters) {
+    setHistoryFilters(filters);
+  }
+
+  function handleHistoryFiltersClear() {
+    setHistoryFilters(emptyHistoryFilters);
+  }
+
+  async function handleReviewExport(format: ReportFormat) {
+    if (!selectedHistoryReview) return;
+    setIsReviewExporting(true);
+    setReviewActionError(null);
+    setReviewActionMessage(null);
+    try {
+      saveDownloadedReport(await exportReview(selectedHistoryReview.id, format));
+      setReviewActionMessage(`${format === 'json' ? 'JSON' : 'Markdown'} report downloaded.`);
+    } catch (error) {
+      setReviewActionError(error instanceof Error ? error.message : 'Unable to export this review.');
+    } finally {
+      setIsReviewExporting(false);
+    }
+  }
+
+  async function handleReviewPublish() {
+    if (
+      !selectedHistoryReview ||
+      !window.confirm('Publish this PullSight review as a comment on the GitHub pull request?')
+    ) {
+      return;
+    }
+
+    setIsReviewPublishing(true);
+    setReviewActionError(null);
+    setReviewActionMessage(null);
+    try {
+      const result = await publishReview(selectedHistoryReview.id);
+      setReviewActionMessage(
+        `GitHub comment ${result.status}.`,
+      );
+    } catch (error) {
+      setReviewActionError(error instanceof Error ? error.message : 'Unable to publish this review.');
+    } finally {
+      setIsReviewPublishing(false);
+    }
+  }
+
+  async function handleComparisonExport(format: ReportFormat) {
+    if (!reviewComparison) return;
+    setIsComparisonExporting(true);
+    setComparisonActionError(null);
+    setComparisonActionMessage(null);
+    try {
+      saveDownloadedReport(
+        await exportComparison(reviewComparison.baseRun.id, reviewComparison.targetRun.id, format),
+      );
+      setComparisonActionMessage(`${format === 'json' ? 'JSON' : 'Markdown'} comparison downloaded.`);
+    } catch (error) {
+      setComparisonActionError(
+        error instanceof Error ? error.message : 'Unable to export this comparison.',
+      );
+    } finally {
+      setIsComparisonExporting(false);
+    }
+  }
+
+  async function handleComparisonPublish() {
+    if (
+      !reviewComparison ||
+      !window.confirm('Publish this PullSight comparison as a comment on the GitHub pull request?')
+    ) {
+      return;
+    }
+
+    setIsComparisonPublishing(true);
+    setComparisonActionError(null);
+    setComparisonActionMessage(null);
+    try {
+      const result = await publishComparison(
+        reviewComparison.baseRun.id,
+        reviewComparison.targetRun.id,
+      );
+      setComparisonActionMessage(`GitHub comparison comment ${result.status}.`);
+    } catch (error) {
+      setComparisonActionError(
+        error instanceof Error ? error.message : 'Unable to publish this comparison.',
+      );
+    } finally {
+      setIsComparisonPublishing(false);
+    }
   }
 
   function handleRepoChange(repoId: number) {
@@ -367,18 +495,34 @@ export function App() {
               isLoading={isHistoryLoading}
               selectedReview={selectedHistoryReview}
               comparisonSelection={comparisonSelection}
+              filters={historyFilters}
+              repositories={availableRepositories}
+              isExporting={isReviewExporting}
+              isPublishing={isReviewPublishing}
+              actionMessage={reviewActionMessage}
+              actionError={reviewActionError}
               onPageChange={loadReviewHistory}
               onReviewSelect={handleHistoryReviewSelect}
               onComparisonToggle={handleComparisonToggle}
+              onFiltersChange={handleHistoryFiltersChange}
+              onFiltersClear={handleHistoryFiltersClear}
+              onExport={handleReviewExport}
+              onPublish={handleReviewPublish}
             />
 
             <CompareReviews
               comparison={reviewComparison}
               error={comparisonError}
               isLoading={isComparisonLoading}
+              isExporting={isComparisonExporting}
+              isPublishing={isComparisonPublishing}
+              actionMessage={comparisonActionMessage}
+              actionError={comparisonActionError}
               selectedReviews={comparisonSelection}
               onClear={handleComparisonClear}
               onCompare={handleCompareReviews}
+              onExport={handleComparisonExport}
+              onPublish={handleComparisonPublish}
             />
           </>
         )}
@@ -390,3 +534,10 @@ export function App() {
 function getViewFromHash(): DashboardView {
   return window.location.hash === '#recent' ? 'recent' : 'reviews';
 }
+
+const emptyHistoryFilters: ReviewHistoryFilters = {
+  repository: '',
+  pullRequestNumber: '',
+  source: '',
+  status: '',
+};

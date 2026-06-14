@@ -4,8 +4,11 @@ import type {
   ReviewFinding,
   ReviewComparison,
   ReviewHistoryDetail,
+  ReviewHistoryFilters,
   ReviewHistoryPage,
+  ReportFormat,
   ReviewRun,
+  ReviewPublishResult,
 } from '../types';
 
 type PullRequestReviewResponse = {
@@ -71,6 +74,11 @@ type ProblemDetailsResponse = {
   detail?: string;
 };
 
+type DownloadedReport = {
+  blob: Blob;
+  filename: string;
+};
+
 export async function analyzePullRequest(
   owner: string,
   name: string,
@@ -125,8 +133,22 @@ export async function analyzePullRequest(
   };
 }
 
-export async function getReviewHistory(page = 1, pageSize = 10): Promise<ReviewHistoryPage> {
-  const response = await fetch(apiUrl(`/api/reviews?page=${page}&pageSize=${pageSize}`), {
+export async function getReviewHistory(
+  page = 1,
+  pageSize = 10,
+  filters?: ReviewHistoryFilters,
+): Promise<ReviewHistoryPage> {
+  const query = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+
+  if (filters?.repository) query.set('repository', filters.repository);
+  if (filters?.pullRequestNumber) query.set('pullRequestNumber', filters.pullRequestNumber);
+  if (filters?.source) query.set('source', filters.source);
+  if (filters?.status) query.set('status', filters.status);
+
+  const response = await fetch(apiUrl(`/api/reviews?${query.toString()}`), {
     credentials: 'include',
   });
 
@@ -187,4 +209,95 @@ export async function compareReviews(
   }
 
   return (await response.json()) as ReviewComparisonResponse;
+}
+
+export async function exportReview(
+  reviewId: string,
+  format: ReportFormat,
+): Promise<DownloadedReport> {
+  return downloadReport(`/api/reviews/${reviewId}/export?format=${format}`, {
+    credentials: 'include',
+  });
+}
+
+export async function exportComparison(
+  baseReviewRunId: string,
+  targetReviewRunId: string,
+  format: ReportFormat,
+): Promise<DownloadedReport> {
+  return downloadReport('/api/reviews/compare/export', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ baseReviewRunId, targetReviewRunId, format }),
+  });
+}
+
+export async function publishReview(reviewId: string): Promise<ReviewPublishResult> {
+  return publishReport(`/api/reviews/${reviewId}/publish`);
+}
+
+export async function publishComparison(
+  baseReviewRunId: string,
+  targetReviewRunId: string,
+): Promise<ReviewPublishResult> {
+  return publishReport('/api/reviews/compare/publish', {
+    baseReviewRunId,
+    targetReviewRunId,
+  });
+}
+
+export function saveDownloadedReport(report: DownloadedReport) {
+  const url = URL.createObjectURL(report.blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = report.filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+async function downloadReport(path: string, init: RequestInit): Promise<DownloadedReport> {
+  const response = await fetch(apiUrl(path), init);
+  if (!response.ok) {
+    throw new Error(await readProblem(response, 'Unable to export this report.'));
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: getFilename(response.headers.get('Content-Disposition')) ?? 'pullsight-report',
+  };
+}
+
+async function publishReport(
+  path: string,
+  body?: { baseReviewRunId: string; targetReviewRunId: string },
+): Promise<ReviewPublishResult> {
+  const response = await fetch(apiUrl(path), {
+    method: 'POST',
+    credentials: 'include',
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    throw new Error(await readProblem(response, 'Unable to publish this report to GitHub.'));
+  }
+
+  return (await response.json()) as ReviewPublishResult;
+}
+
+async function readProblem(response: Response, fallback: string) {
+  if (response.status === 401) {
+    return 'Login with GitHub again to continue.';
+  }
+
+  const problem = (await response.json().catch(() => null)) as ProblemDetailsResponse | null;
+  return problem?.detail ?? fallback;
+}
+
+function getFilename(contentDisposition: string | null) {
+  const match = contentDisposition?.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
+  return match ? decodeURIComponent(match[1].replace(/"$/, '')) : null;
 }

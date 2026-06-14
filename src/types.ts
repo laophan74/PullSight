@@ -101,6 +101,13 @@ export type ReviewHistoryPage = {
   totalPages: number;
 };
 
+export type ReviewHistoryFilters = {
+  repository: string;
+  pullRequestNumber: string;
+  source: string;
+  status: string;
+};
+
 export type ReviewHistoryDetail = ReviewHistoryItem & {
   findings: ReviewFinding[];
 };
@@ -111,4 +118,12 @@ export type ReviewComparison = {
   added: ReviewFinding[];
   resolved: ReviewFinding[];
   unchanged: ReviewFinding[];
+};
+
+export type ReportFormat = 'markdown' | 'json';
+
+export type ReviewPublishResult = {
+  status: 'created' | 'updated';
+  commentId: number;
+  commentUrl: string;
 };

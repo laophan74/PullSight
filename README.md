@@ -37,8 +37,10 @@ src/
 - The review response updates the risk score, analyzer status, summary, findings, changed-file metrics, and fetched diff list.
 - Persisted results display `completed` or `fallback`; repeated analysis of the same PR head SHA displays `cached`.
 - Recent Reviews calls `GET /api/reviews` with pagination and opens persisted findings through `GET /api/reviews/{reviewRunId}`.
-- Review history includes loading, empty, error, pagination, and saved detail states.
+- Review history filters by repository, PR number, source, and status; filter changes return to page 1 and include loading, empty, no-results, error, pagination, and saved detail states.
 - Recent Reviews allows selecting two runs, and Compare Reviews displays base/target head SHAs plus added, resolved, and unchanged finding groups.
+- Saved reviews and comparisons export as Markdown or JSON through `src/services/reviews.ts`.
+- Saved reviews and comparisons publish to GitHub after confirmation, with loading, success, and error feedback.
 - Comparison includes loading, empty, validation, and API error states.
 - Sidebar navigation separates the dashboard into `#reviews` for active PR analysis and `#recent` for saved results plus comparisons.
 - Recent review cards scroll inside a bounded list, while pagination stays visible.
@@ -79,7 +81,7 @@ If these do not appear, refresh repositories, verify the backend deployment is a
 
 ## Next Frontend Feature
 
-Add repository and pull request filters for larger saved review histories.
+Add richer published-comment links or optional GitHub check-run status.
 
 ## Local Development
 

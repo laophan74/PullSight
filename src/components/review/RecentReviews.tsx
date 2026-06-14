@@ -1,6 +1,9 @@
 import { ChevronLeft, ChevronRight, Clock3, History, LoaderCircle } from 'lucide-react';
 import type { ReviewHistoryDetail, ReviewHistoryItem, ReviewHistoryPage } from '../../types';
+import type { ReportFormat, Repository, ReviewHistoryFilters } from '../../types';
 import { FindingsList } from './FindingsList';
+import { ReportActions } from './ReportActions';
+import { ReviewHistoryFiltersBar } from './ReviewHistoryFilters';
 
 type RecentReviewsProps = {
   history: ReviewHistoryPage | null;
@@ -10,9 +13,19 @@ type RecentReviewsProps = {
   error: string | null;
   detailError: string | null;
   comparisonSelection: ReviewHistoryItem[];
+  filters: ReviewHistoryFilters;
+  repositories: Repository[];
+  isExporting: boolean;
+  isPublishing: boolean;
+  actionMessage: string | null;
+  actionError: string | null;
   onPageChange: (page: number) => void;
   onReviewSelect: (reviewId: string) => void;
   onComparisonToggle: (review: ReviewHistoryItem) => void;
+  onFiltersChange: (filters: ReviewHistoryFilters) => void;
+  onFiltersClear: () => void;
+  onExport: (format: ReportFormat) => void;
+  onPublish: () => void;
 };
 
 export function RecentReviews({
@@ -23,10 +36,22 @@ export function RecentReviews({
   error,
   detailError,
   comparisonSelection,
+  filters,
+  repositories,
+  isExporting,
+  isPublishing,
+  actionMessage,
+  actionError,
   onPageChange,
   onReviewSelect,
   onComparisonToggle,
+  onFiltersChange,
+  onFiltersClear,
+  onExport,
+  onPublish,
 }: RecentReviewsProps) {
+  const hasFilters = Object.values(filters).some(Boolean);
+
   return (
     <section className="history-section" id="recent-reviews" aria-labelledby="recent-reviews-title">
       <div className="section-heading">
@@ -36,6 +61,14 @@ export function RecentReviews({
         </div>
         {history ? <span className="history-count">{history.totalCount} saved</span> : null}
       </div>
+
+      <ReviewHistoryFiltersBar
+        disabled={isLoading}
+        filters={filters}
+        onChange={onFiltersChange}
+        onClear={onFiltersClear}
+        repositories={repositories}
+      />
 
       {isLoading ? (
         <div className="history-state">
@@ -49,7 +82,9 @@ export function RecentReviews({
       {!isLoading && !error && history?.items.length === 0 ? (
         <div className="history-state">
           <History size={20} />
-          Analyze a pull request to create your first saved review.
+          {hasFilters
+            ? 'No saved reviews match these filters.'
+            : 'Analyze a pull request to create your first saved review.'}
         </div>
       ) : null}
 
@@ -169,6 +204,16 @@ export function RecentReviews({
                     <span>{selectedReview.analyzer}</span>
                     <code>{selectedReview.headSha}</code>
                   </div>
+                  <ReportActions
+                    disabled={!selectedReview}
+                    error={actionError}
+                    isExporting={isExporting}
+                    isPublishing={isPublishing}
+                    label="saved review"
+                    message={actionMessage}
+                    onExport={onExport}
+                    onPublish={onPublish}
+                  />
                   <FindingsList findings={selectedReview.findings} />
                 </>
               ) : null}

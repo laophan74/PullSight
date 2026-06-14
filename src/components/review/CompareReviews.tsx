@@ -1,14 +1,22 @@
 import { ArrowRight, GitCompareArrows, LoaderCircle } from 'lucide-react';
 import type { ReviewComparison, ReviewFinding, ReviewHistoryItem } from '../../types';
+import type { ReportFormat } from '../../types';
 import { FindingsList } from './FindingsList';
+import { ReportActions } from './ReportActions';
 
 type CompareReviewsProps = {
   selectedReviews: ReviewHistoryItem[];
   comparison: ReviewComparison | null;
   isLoading: boolean;
   error: string | null;
+  isExporting: boolean;
+  isPublishing: boolean;
+  actionMessage: string | null;
+  actionError: string | null;
   onCompare: () => void;
   onClear: () => void;
+  onExport: (format: ReportFormat) => void;
+  onPublish: () => void;
 };
 
 export function CompareReviews({
@@ -16,8 +24,14 @@ export function CompareReviews({
   comparison,
   isLoading,
   error,
+  isExporting,
+  isPublishing,
+  actionMessage,
+  actionError,
   onCompare,
   onClear,
+  onExport,
+  onPublish,
 }: CompareReviewsProps) {
   const selectionIsValid =
     selectedReviews.length === 2 &&
@@ -72,6 +86,16 @@ export function CompareReviews({
 
       {comparison ? (
         <>
+          <ReportActions
+            disabled={!comparison}
+            error={actionError}
+            isExporting={isExporting}
+            isPublishing={isPublishing}
+            label="review comparison"
+            message={actionMessage}
+            onExport={onExport}
+            onPublish={onPublish}
+          />
           <div className="compare-run-grid">
             <RunCard label="Base run" run={comparison.baseRun} />
             <ArrowRight className="compare-arrow" aria-hidden="true" size={22} />

@@ -33,7 +33,8 @@ body {
 }
 
 button,
-select {
+select,
+input {
   font: inherit;
 }
 
@@ -374,6 +375,42 @@ h3 {
   font-weight: 800;
 }
 
+.history-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) repeat(3, minmax(130px, 0.75fr)) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.history-filters label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.history-filters select,
+.history-filters input,
+.report-action-buttons select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--panel);
+}
+
+.filter-clear {
+  white-space: nowrap;
+}
+
 .history-grid {
   display: grid;
   grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
@@ -535,6 +572,62 @@ h3 {
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 16px;
+}
+
+.report-actions {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f9fbf8;
+}
+
+.report-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-action-buttons label {
+  min-width: 130px;
+}
+
+.action-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.action-message {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.action-message.success {
+  color: var(--green);
+}
+
+.action-message.error {
+  color: var(--red);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .history-state {
@@ -1052,6 +1145,10 @@ code {
   .history-grid {
     grid-template-columns: 1fr 1fr;
   }
+
+  .history-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -1085,7 +1182,8 @@ code {
   .nav-list,
   .metrics-grid,
   .review-layout,
-  .history-grid {
+  .history-grid,
+  .history-filters {
     grid-template-columns: 1fr;
   }
 
@@ -1119,5 +1217,12 @@ code {
 
   .history-scroll {
     max-height: 420px;
+  }
+
+  .report-action-buttons,
+  .report-action-buttons label,
+  .report-action-buttons .secondary-button,
+  .filter-clear {
+    width: 100%;
   }
 }

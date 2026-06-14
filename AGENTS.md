@@ -30,6 +30,8 @@ Recent Reviews is implemented through `src/services/reviews.ts` and `src/compone
 
 Compare Reviews is implemented through `POST /api/reviews/compare` and `src/components/review/CompareReviews.tsx`. Keep API calls in `src/services/reviews.ts` and comparison selection/loading orchestration in `App.tsx`.
 
+Review History filters, Markdown/JSON export, and GitHub publish actions are implemented in the Recent view. Keep filters/actions presentational components under `src/components/review`, API calls in `src/services/reviews.ts`, and request state orchestration in `App.tsx`.
+
 ## Standards
 
 - Use React + TypeScript.
