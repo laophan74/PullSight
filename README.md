@@ -41,6 +41,10 @@ src/
 - Recent Reviews allows selecting two runs, and Compare Reviews displays base/target head SHAs plus added, resolved, and unchanged finding groups.
 - Saved reviews and comparisons export as Markdown or JSON through `src/services/reviews.ts`.
 - Saved reviews and comparisons publish to GitHub after confirmation, with loading, success, and error feedback.
+- Review history displays queued, analyzing, completed, fallback, and failed badges and filters. Failed runs can be retried from persisted context.
+- Current and saved reviews render structured overview, risk overview, key changes, and semantic suggested-test-plan lists.
+- Saved completed/fallback reviews expose separate issue-comment and Check Run actions.
+- Inline-eligible findings can publish individually; important findings can publish as a group with per-finding publishing, published, skipped, and error states.
 - Comparison includes loading, empty, validation, and API error states.
 - Sidebar navigation separates the dashboard into `#reviews` for active PR analysis and `#recent` for saved results plus comparisons.
 - Recent review cards scroll inside a bounded list, while pagination stays visible.
@@ -81,7 +85,7 @@ If these do not appear, refresh repositories, verify the backend deployment is a
 
 ## Next Frontend Feature
 
-Add richer published-comment links or optional GitHub check-run status.
+Add hosted share links only when persistent public reports are needed.
 
 ## Local Development
 

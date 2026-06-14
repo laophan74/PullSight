@@ -1,4 +1,4 @@
-import { Download, LoaderCircle, Send } from 'lucide-react';
+import { BadgeCheck, Download, LoaderCircle, Send } from 'lucide-react';
 import type { ReportFormat } from '../../types';
 
 type ReportActionsProps = {
@@ -6,10 +6,12 @@ type ReportActionsProps = {
   disabled: boolean;
   isExporting: boolean;
   isPublishing: boolean;
+  isPublishingCheck?: boolean;
   message: string | null;
   error: string | null;
   onExport: (format: ReportFormat) => void;
   onPublish: () => void;
+  onPublishCheck?: () => void;
 };
 
 export function ReportActions({
@@ -17,10 +19,12 @@ export function ReportActions({
   disabled,
   isExporting,
   isPublishing,
+  isPublishingCheck = false,
   message,
   error,
   onExport,
   onPublish,
+  onPublishCheck,
 }: ReportActionsProps) {
   return (
     <div className="report-actions">
@@ -54,6 +58,22 @@ export function ReportActions({
           )}
           {isPublishing ? 'Publishing...' : 'Publish to GitHub'}
         </button>
+        {onPublishCheck ? (
+          <button
+            aria-label={`Publish ${label} as a GitHub check run`}
+            className="secondary-button"
+            disabled={disabled || isPublishingCheck}
+            onClick={onPublishCheck}
+            type="button"
+          >
+            {isPublishingCheck ? (
+              <LoaderCircle className="spin-icon" aria-hidden="true" size={16} />
+            ) : (
+              <BadgeCheck aria-hidden="true" size={16} />
+            )}
+            {isPublishingCheck ? 'Publishing check...' : 'Publish Check Run'}
+          </button>
+        ) : null}
         {isExporting ? (
           <span className="action-progress">
             <Download aria-hidden="true" size={15} />

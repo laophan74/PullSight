@@ -63,6 +63,17 @@ export type ReviewFinding = {
   title: string;
   detail: string;
   source: 'ai' | 'rule';
+  suggestion?: string | null;
+  isInlineCommentable: boolean;
+};
+
+export type ReviewStatus = 'queued' | 'analyzing' | 'completed' | 'fallback' | 'failed';
+
+export type ReviewSummary = {
+  overview: string;
+  riskOverview: string;
+  keyChanges: string[];
+  suggestedTestPlan: string[];
 };
 
 export type ReviewRun = {
@@ -70,12 +81,14 @@ export type ReviewRun = {
   repoName: string;
   prNumber: number;
   headSha: string;
-  status: 'cached' | 'completed' | 'fallback';
+  status: ReviewStatus | 'cached';
   analyzer: string;
   riskScore: number;
   createdAt: string;
   quotaRemaining: number;
   summary: string;
+  summaryDetails: ReviewSummary;
+  errorMessage?: string | null;
   findings: ReviewFinding[];
 };
 
@@ -84,11 +97,13 @@ export type ReviewHistoryItem = {
   repositoryFullName: string;
   pullRequestNumber: number;
   headSha: string;
-  status: 'completed' | 'fallback';
-  source: 'ai' | 'rule';
+  status: ReviewStatus;
+  source: 'ai' | 'rule' | 'pending' | 'system';
   analyzer: string;
   riskScore: number;
   summary: string;
+  summaryDetails: ReviewSummary;
+  errorMessage?: string | null;
   findingCount: number;
   createdAt: string;
 };
@@ -126,4 +141,38 @@ export type ReviewPublishResult = {
   status: 'created' | 'updated';
   commentId: number;
   commentUrl: string;
+};
+
+export type CheckRunPublishResult = {
+  status: 'created' | 'updated';
+  checkRunId: number;
+  checkRunUrl: string;
+  conclusion: 'failure' | 'neutral' | 'success';
+  annotationCount: number;
+};
+
+export type InlinePublishStatus =
+  | 'publishing'
+  | 'created'
+  | 'updated'
+  | 'alreadyPublished'
+  | 'skipped'
+  | 'failed';
+
+export type InlineCommentPublishItem = {
+  findingId: string;
+  status: Exclude<InlinePublishStatus, 'publishing'>;
+  commentId?: number | null;
+  commentUrl?: string | null;
+  reasonCode?: string | null;
+  message?: string | null;
+};
+
+export type InlineCommentsPublishResult = {
+  items: InlineCommentPublishItem[];
+  created: number;
+  updated: number;
+  alreadyPublished: number;
+  skipped: number;
+  failed: number;
 };

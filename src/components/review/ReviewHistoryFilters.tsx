@@ -80,8 +80,11 @@ export function ReviewHistoryFiltersBar({
           value={filters.status}
         >
           <option value="">All statuses</option>
+          <option value="queued">Queued</option>
+          <option value="analyzing">Analyzing</option>
           <option value="completed">Completed</option>
           <option value="fallback">Fallback</option>
+          <option value="failed">Failed</option>
         </select>
       </label>
 

@@ -32,6 +32,8 @@ Compare Reviews is implemented through `POST /api/reviews/compare` and `src/comp
 
 Review History filters, Markdown/JSON export, and GitHub publish actions are implemented in the Recent view. Keep filters/actions presentational components under `src/components/review`, API calls in `src/services/reviews.ts`, and request state orchestration in `App.tsx`.
 
+Recent Reviews displays all lifecycle statuses, structured summaries, sanitized failed errors, retry, issue-comment publish, Check Run publish, and per-finding inline publish state. Keep incomplete-run actions disabled and preserve the independently scrolling history list and mobile burger menu.
+
 ## Standards
 
 - Use React + TypeScript.

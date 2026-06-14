@@ -19,7 +19,10 @@ import {
   getReviewHistory,
   getReviewHistoryDetail,
   publishComparison,
+  publishCheckRun,
+  publishInlineComments,
   publishReview,
+  retryReview,
   saveDownloadedReport,
 } from './services/reviews';
 import type {
@@ -34,6 +37,7 @@ import type {
   ReviewRun,
   ReportFormat,
   Severity,
+  InlinePublishStatus,
 } from './types';
 import { getFilteredFindings } from './utils/review';
 
@@ -70,6 +74,12 @@ export function App() {
   const [historyFilters, setHistoryFilters] = useState<ReviewHistoryFilters>(emptyHistoryFilters);
   const [isReviewExporting, setIsReviewExporting] = useState(false);
   const [isReviewPublishing, setIsReviewPublishing] = useState(false);
+  const [isCheckRunPublishing, setIsCheckRunPublishing] = useState(false);
+  const [isReviewRetrying, setIsReviewRetrying] = useState(false);
+  const [isImportantFindingsPublishing, setIsImportantFindingsPublishing] = useState(false);
+  const [inlinePublishStates, setInlinePublishStates] = useState<
+    Record<string, { status: InlinePublishStatus; message?: string | null }>
+  >({});
   const [reviewActionMessage, setReviewActionMessage] = useState<string | null>(null);
   const [reviewActionError, setReviewActionError] = useState<string | null>(null);
   const [isComparisonExporting, setIsComparisonExporting] = useState(false);
@@ -251,6 +261,7 @@ export function App() {
 
     try {
       setSelectedHistoryReview(await getReviewHistoryDetail(reviewId));
+      setInlinePublishStates({});
     } catch (error) {
       setHistoryDetailError(error instanceof Error ? error.message : 'Unable to open saved review.');
       setSelectedHistoryReview(null);
@@ -260,6 +271,9 @@ export function App() {
   }
 
   function handleComparisonToggle(review: ReviewHistoryItem) {
+    if (review.status !== 'completed' && review.status !== 'fallback') {
+      return;
+    }
     setComparisonError(null);
     setReviewComparison(null);
     setComparisonSelection((currentSelection) => {
@@ -346,6 +360,132 @@ export function App() {
       setReviewActionError(error instanceof Error ? error.message : 'Unable to publish this review.');
     } finally {
       setIsReviewPublishing(false);
+    }
+  }
+
+  async function handleCheckRunPublish() {
+    if (
+      !selectedHistoryReview ||
+      !window.confirm('Publish or update the PullSight GitHub Check Run for this saved review?')
+    ) {
+      return;
+    }
+
+    setIsCheckRunPublishing(true);
+    setReviewActionError(null);
+    setReviewActionMessage(null);
+    try {
+      const result = await publishCheckRun(selectedHistoryReview.id);
+      setReviewActionMessage(
+        `GitHub Check Run ${result.status} with ${result.annotationCount} annotation(s), conclusion ${result.conclusion}.`,
+      );
+    } catch (error) {
+      setReviewActionError(
+        error instanceof Error ? error.message : 'Unable to publish the GitHub Check Run.',
+      );
+    } finally {
+      setIsCheckRunPublishing(false);
+    }
+  }
+
+  async function handleRetryReview() {
+    if (!selectedHistoryReview) return;
+    setIsReviewRetrying(true);
+    setReviewActionError(null);
+    setReviewActionMessage(null);
+    try {
+      const result = await retryReview(selectedHistoryReview.id);
+      setCurrentReviewRun(result.reviewRun);
+      setPullRequestDiff(result.diff);
+      await loadReviewHistory(1);
+      setSelectedHistoryReview(await getReviewHistoryDetail(result.reviewRun.id));
+      setReviewActionMessage('Review reanalyzed successfully.');
+    } catch (error) {
+      setReviewActionError(error instanceof Error ? error.message : 'Unable to retry this review.');
+    } finally {
+      setIsReviewRetrying(false);
+    }
+  }
+
+  async function handlePublishFinding(findingId: string) {
+    if (
+      !selectedHistoryReview ||
+      !window.confirm('Publish this finding as an inline GitHub review comment?')
+    ) {
+      return;
+    }
+
+    setInlinePublishStates((current) => ({
+      ...current,
+      [findingId]: { status: 'publishing' },
+    }));
+    try {
+      const result = await publishInlineComments(selectedHistoryReview.id, {
+        findingIds: [findingId],
+      });
+      const item = result.items[0];
+      setInlinePublishStates((current) => ({
+        ...current,
+        [findingId]: {
+          status: item?.status ?? 'failed',
+          message: item?.message ?? item?.status ?? 'No publish result returned.',
+        },
+      }));
+    } catch (error) {
+      setInlinePublishStates((current) => ({
+        ...current,
+        [findingId]: {
+          status: 'failed',
+          message: error instanceof Error ? error.message : 'Unable to publish this finding.',
+        },
+      }));
+    }
+  }
+
+  async function handlePublishImportantFindings() {
+    if (
+      !selectedHistoryReview ||
+      !window.confirm('Publish all important inline-eligible findings to this GitHub pull request?')
+    ) {
+      return;
+    }
+
+    const findingIds = selectedHistoryReview.findings
+      .filter(
+        (finding) =>
+          finding.isInlineCommentable &&
+          (finding.severity === 'critical' || finding.severity === 'high'),
+      )
+      .map((finding) => finding.id);
+    setIsImportantFindingsPublishing(true);
+    setInlinePublishStates((current) => ({
+      ...current,
+      ...Object.fromEntries(findingIds.map((id) => [id, { status: 'publishing' as const }])),
+    }));
+    try {
+      const result = await publishInlineComments(selectedHistoryReview.id, {
+        importantOnly: true,
+      });
+      setInlinePublishStates((current) => ({
+        ...current,
+        ...Object.fromEntries(
+          result.items.map((item) => [
+            item.findingId,
+            { status: item.status, message: item.message ?? item.status },
+          ]),
+        ),
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Unable to publish important findings.';
+      setInlinePublishStates((current) => ({
+        ...current,
+        ...Object.fromEntries(
+          findingIds.map((id) => [id, { status: 'failed' as const, message }]),
+        ),
+      }));
+    } finally {
+      setIsImportantFindingsPublishing(false);
     }
   }
 
@@ -499,6 +639,10 @@ export function App() {
               repositories={availableRepositories}
               isExporting={isReviewExporting}
               isPublishing={isReviewPublishing}
+              isPublishingCheck={isCheckRunPublishing}
+              isRetrying={isReviewRetrying}
+              isPublishingImportant={isImportantFindingsPublishing}
+              inlinePublishStates={inlinePublishStates}
               actionMessage={reviewActionMessage}
               actionError={reviewActionError}
               onPageChange={loadReviewHistory}
@@ -508,6 +652,10 @@ export function App() {
               onFiltersClear={handleHistoryFiltersClear}
               onExport={handleReviewExport}
               onPublish={handleReviewPublish}
+              onPublishCheck={handleCheckRunPublish}
+              onRetry={handleRetryReview}
+              onPublishFinding={handlePublishFinding}
+              onPublishImportant={handlePublishImportantFindings}
             />
 
             <CompareReviews

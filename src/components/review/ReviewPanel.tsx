@@ -2,6 +2,8 @@ import { Sparkles } from 'lucide-react';
 import type { PullRequest, PullRequestDiff, ReviewFinding, ReviewRun, Severity } from '../../types';
 import { FindingsList } from './FindingsList';
 import { SeverityTabs } from './SeverityTabs';
+import { ReviewSummaryCard } from './ReviewSummaryCard';
+import { ReviewStatusBadge } from './ReviewStatusBadge';
 
 type ReviewPanelProps = {
   activeSeverity: Severity | 'all';
@@ -47,16 +49,18 @@ export function ReviewPanel({
           <h2>{pullRequest.title}</h2>
         </div>
         {reviewRun ? (
-          <span className={`status-pill ${reviewRun.status}`}>
+          <span className="status-pill">
             <Sparkles size={15} />
-            {reviewRun.status}
+            <ReviewStatusBadge status={reviewRun.status} />
           </span>
         ) : null}
       </div>
 
-      <p className="review-summary">
-        {reviewRun?.summary ?? 'Click Analyze PR to fetch the diff and run the AI review.'}
-      </p>
+      {reviewRun ? (
+        <ReviewSummaryCard summary={reviewRun.summaryDetails} />
+      ) : (
+        <p className="review-summary">Click Analyze PR to fetch the diff and run the AI review.</p>
+      )}
 
       <section className="diff-summary" aria-label="Pull request diff">
         <div className="section-heading compact">

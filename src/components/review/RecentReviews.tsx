@@ -1,9 +1,16 @@
 import { ChevronLeft, ChevronRight, Clock3, History, LoaderCircle } from 'lucide-react';
-import type { ReviewHistoryDetail, ReviewHistoryItem, ReviewHistoryPage } from '../../types';
+import type {
+  InlinePublishStatus,
+  ReviewHistoryDetail,
+  ReviewHistoryItem,
+  ReviewHistoryPage,
+} from '../../types';
 import type { ReportFormat, Repository, ReviewHistoryFilters } from '../../types';
 import { FindingsList } from './FindingsList';
 import { ReportActions } from './ReportActions';
 import { ReviewHistoryFiltersBar } from './ReviewHistoryFilters';
+import { ReviewStatusBadge } from './ReviewStatusBadge';
+import { ReviewSummaryCard } from './ReviewSummaryCard';
 
 type RecentReviewsProps = {
   history: ReviewHistoryPage | null;
@@ -17,6 +24,10 @@ type RecentReviewsProps = {
   repositories: Repository[];
   isExporting: boolean;
   isPublishing: boolean;
+  isPublishingCheck: boolean;
+  isRetrying: boolean;
+  isPublishingImportant: boolean;
+  inlinePublishStates: Record<string, { status: InlinePublishStatus; message?: string | null }>;
   actionMessage: string | null;
   actionError: string | null;
   onPageChange: (page: number) => void;
@@ -26,6 +37,10 @@ type RecentReviewsProps = {
   onFiltersClear: () => void;
   onExport: (format: ReportFormat) => void;
   onPublish: () => void;
+  onPublishCheck: () => void;
+  onRetry: () => void;
+  onPublishFinding: (findingId: string) => void;
+  onPublishImportant: () => void;
 };
 
 export function RecentReviews({
@@ -40,6 +55,10 @@ export function RecentReviews({
   repositories,
   isExporting,
   isPublishing,
+  isPublishingCheck,
+  isRetrying,
+  isPublishingImportant,
+  inlinePublishStates,
   actionMessage,
   actionError,
   onPageChange,
@@ -49,6 +68,10 @@ export function RecentReviews({
   onFiltersClear,
   onExport,
   onPublish,
+  onPublishCheck,
+  onRetry,
+  onPublishFinding,
+  onPublishImportant,
 }: RecentReviewsProps) {
   const hasFilters = Object.values(filters).some(Boolean);
 
@@ -115,6 +138,7 @@ export function RecentReviews({
                       <span>PR #{review.pullRequestNumber}</span>
                     </div>
                     <span className="history-item-meta">
+                      <ReviewStatusBadge status={review.status} />
                       <span className={`risk-badge risk-${getRiskLevel(review.riskScore)}`}>
                         Risk {review.riskScore}
                       </span>
@@ -129,6 +153,7 @@ export function RecentReviews({
                       <label>
                         <input
                           checked={comparisonSelection.some((item) => item.id === review.id)}
+                          disabled={!isComplete(review.status)}
                           onChange={() => onComparisonToggle(review)}
                           type="checkbox"
                         />
@@ -189,7 +214,7 @@ export function RecentReviews({
                   <div className="section-heading compact">
                     <div>
                       <p className="eyebrow">
-                        {selectedReview.source} / {selectedReview.status}
+                        {selectedReview.source} / <ReviewStatusBadge status={selectedReview.status} />
                       </p>
                       <h3>
                         {selectedReview.repositoryFullName} PR #{selectedReview.pullRequestNumber}
@@ -199,22 +224,60 @@ export function RecentReviews({
                       Risk {selectedReview.riskScore}
                     </span>
                   </div>
-                  <p className="review-summary">{selectedReview.summary}</p>
+                  <ReviewSummaryCard summary={selectedReview.summaryDetails} />
+                  {selectedReview.status === 'failed' && selectedReview.errorMessage ? (
+                    <p className="failed-review-message" role="alert">
+                      {selectedReview.errorMessage}
+                    </p>
+                  ) : null}
                   <div className="history-detail-meta">
                     <span>{selectedReview.analyzer}</span>
                     <code>{selectedReview.headSha}</code>
                   </div>
                   <ReportActions
-                    disabled={!selectedReview}
+                    disabled={!isComplete(selectedReview.status)}
                     error={actionError}
                     isExporting={isExporting}
                     isPublishing={isPublishing}
+                    isPublishingCheck={isPublishingCheck}
                     label="saved review"
                     message={actionMessage}
                     onExport={onExport}
                     onPublish={onPublish}
+                    onPublishCheck={onPublishCheck}
                   />
-                  <FindingsList findings={selectedReview.findings} />
+                  {selectedReview.status === 'failed' ? (
+                    <button
+                      className="secondary-button retry-review"
+                      disabled={isRetrying}
+                      onClick={onRetry}
+                      type="button"
+                    >
+                      {isRetrying ? 'Retrying...' : 'Retry / Reanalyze'}
+                    </button>
+                  ) : null}
+                  {isComplete(selectedReview.status) &&
+                  selectedReview.findings.some(
+                    (finding) =>
+                      finding.isInlineCommentable &&
+                      (finding.severity === 'critical' || finding.severity === 'high'),
+                  ) ? (
+                    <button
+                      className="secondary-button publish-important"
+                      disabled={isPublishingImportant}
+                      onClick={onPublishImportant}
+                      type="button"
+                    >
+                      {isPublishingImportant
+                        ? 'Publishing important findings...'
+                        : 'Publish important findings'}
+                    </button>
+                  ) : null}
+                  <FindingsList
+                    findings={selectedReview.findings}
+                    onPublish={isComplete(selectedReview.status) ? onPublishFinding : undefined}
+                    publishStates={inlinePublishStates}
+                  />
                 </>
               ) : null}
             </div>
@@ -223,6 +286,10 @@ export function RecentReviews({
       ) : null}
     </section>
   );
+}
+
+function isComplete(status: ReviewHistoryItem['status']) {
+  return status === 'completed' || status === 'fallback';
 }
 
 function formatDate(value: string) {

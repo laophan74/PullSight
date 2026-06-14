@@ -9,6 +9,8 @@ import type {
   ReportFormat,
   ReviewRun,
   ReviewPublishResult,
+  CheckRunPublishResult,
+  InlineCommentsPublishResult,
 } from '../types';
 
 type PullRequestReviewResponse = {
@@ -27,6 +29,8 @@ type ReviewRunResponse = {
   quotaRemaining: number;
   createdAt: string;
   summary: string;
+  summaryDetails: ReviewRun['summaryDetails'];
+  errorMessage?: string | null;
   findings: ReviewFindingResponse[];
 };
 
@@ -38,6 +42,8 @@ type ReviewFindingResponse = {
   title: string;
   detail: string;
   source: ReviewFinding['source'];
+  suggestion?: string | null;
+  isInlineCommentable: boolean;
 };
 
 type ReviewHistoryPageResponse = Omit<ReviewHistoryPage, 'items'> & {
@@ -54,6 +60,8 @@ type ReviewHistoryItemResponse = {
   analyzer: string;
   riskScore: number;
   summary: string;
+  summaryDetails: ReviewHistoryDetail['summaryDetails'];
+  errorMessage?: string | null;
   findingCount: number;
   createdAt: string;
 };
@@ -120,6 +128,8 @@ export async function analyzePullRequest(
       createdAt: new Date(payload.reviewRun.createdAt).toLocaleString(),
       quotaRemaining: payload.reviewRun.quotaRemaining,
       summary: payload.reviewRun.summary,
+      summaryDetails: payload.reviewRun.summaryDetails,
+      errorMessage: payload.reviewRun.errorMessage,
       findings: payload.reviewRun.findings.map((finding) => ({
         id: finding.id,
         severity: finding.severity,
@@ -128,6 +138,8 @@ export async function analyzePullRequest(
         title: finding.title,
         detail: finding.detail,
         source: finding.source,
+        suggestion: finding.suggestion,
+        isInlineCommentable: finding.isInlineCommentable,
       })),
     },
   };
@@ -247,6 +259,53 @@ export async function publishComparison(
   });
 }
 
+export async function retryReview(
+  reviewId: string,
+): Promise<{ reviewRun: ReviewRun; diff: PullRequestDiff }> {
+  const response = await fetch(apiUrl(`/api/reviews/${reviewId}/retry`), {
+    method: 'POST',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error(await readProblem(response, 'Unable to retry this review.'));
+  }
+
+  const payload = (await response.json()) as PullRequestReviewResponse;
+  return {
+    diff: payload.diff,
+    reviewRun: mapReviewRun(payload.reviewRun),
+  };
+}
+
+export async function publishCheckRun(reviewId: string): Promise<CheckRunPublishResult> {
+  const response = await fetch(apiUrl(`/api/reviews/${reviewId}/check-run`), {
+    method: 'POST',
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    throw new Error(await readProblem(response, 'Unable to publish the GitHub check run.'));
+  }
+
+  return (await response.json()) as CheckRunPublishResult;
+}
+
+export async function publishInlineComments(
+  reviewId: string,
+  options: { findingIds?: string[]; importantOnly?: boolean },
+): Promise<InlineCommentsPublishResult> {
+  const response = await fetch(apiUrl(`/api/reviews/${reviewId}/inline-comments`), {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(options),
+  });
+  if (!response.ok) {
+    throw new Error(await readProblem(response, 'Unable to publish inline review comments.'));
+  }
+
+  return (await response.json()) as InlineCommentsPublishResult;
+}
+
 export function saveDownloadedReport(report: DownloadedReport) {
   const url = URL.createObjectURL(report.blob);
   const link = document.createElement('a');
@@ -300,4 +359,32 @@ async function readProblem(response: Response, fallback: string) {
 function getFilename(contentDisposition: string | null) {
   const match = contentDisposition?.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
   return match ? decodeURIComponent(match[1].replace(/"$/, '')) : null;
+}
+
+function mapReviewRun(reviewRun: ReviewRunResponse): ReviewRun {
+  return {
+    id: reviewRun.id,
+    repoName: reviewRun.repositoryName,
+    prNumber: reviewRun.pullRequestNumber,
+    headSha: reviewRun.headSha,
+    status: reviewRun.status,
+    analyzer: reviewRun.analyzer,
+    riskScore: reviewRun.riskScore,
+    createdAt: new Date(reviewRun.createdAt).toLocaleString(),
+    quotaRemaining: reviewRun.quotaRemaining,
+    summary: reviewRun.summary,
+    summaryDetails: reviewRun.summaryDetails,
+    errorMessage: reviewRun.errorMessage,
+    findings: reviewRun.findings.map((finding) => ({
+      id: finding.id,
+      severity: finding.severity,
+      filePath: finding.filePath,
+      line: finding.line,
+      title: finding.title,
+      detail: finding.detail,
+      source: finding.source,
+      suggestion: finding.suggestion,
+      isInlineCommentable: finding.isInlineCommentable,
+    })),
+  };
 }
