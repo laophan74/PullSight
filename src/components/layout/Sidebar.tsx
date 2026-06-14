@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
-  Database,
   FileDiff,
   GitBranch,
-  GitPullRequestArrow,
   History,
   Menu,
-  ShieldCheck,
   X,
 } from 'lucide-react';
 import type { AuthUser } from '../../services/auth';
@@ -87,18 +84,6 @@ export function Sidebar({ authUser, activeView }: SidebarProps) {
         >
           <History aria-hidden="true" size={18} />
           Recent
-        </a>
-        <a className="nav-item" href="#repositories" onClick={closeMenu}>
-          <GitPullRequestArrow aria-hidden="true" size={18} />
-          Repositories
-        </a>
-        <a className="nav-item" href="#quota" onClick={closeMenu}>
-          <ShieldCheck aria-hidden="true" size={18} />
-          Quota
-        </a>
-        <a className="nav-item" href="#storage" onClick={closeMenu}>
-          <Database aria-hidden="true" size={18} />
-          Storage
         </a>
       </nav>
 
